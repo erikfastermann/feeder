@@ -2,14 +2,17 @@ package handler
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/erikfastermann/feeder/db"
 	"github.com/erikfastermann/kvparser"
 	"github.com/mmcdole/gofeed"
+	"golang.org/x/net/html"
 )
 
 func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, error) {
@@ -106,6 +109,7 @@ func (h *Handler) updateFeed(name, url string) ([]db.Item, error) {
 		if len(desc) > 300 {
 			desc = desc[:300] + "..."
 		}
+		desc = removeHTMLTags(desc)
 
 		items = append(items, db.Item{
 			FeedTitle:   name,
@@ -125,4 +129,21 @@ func checkAuthor(author *gofeed.Person, name string) string {
 		return author.Name
 	}
 	return name
+}
+
+func removeHTMLTags(content string) string {
+	var sanitized strings.Builder
+	r := strings.NewReader(content)
+	z := html.NewTokenizer(r)
+	for {
+		switch t := z.Next(); t {
+		case html.ErrorToken:
+			if z.Err() == io.EOF {
+				return sanitized.String()
+			}
+			continue
+		case html.TextToken:
+			sanitized.Write(z.Text())
+		}
+	}
 }
