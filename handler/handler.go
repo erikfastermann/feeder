@@ -16,6 +16,11 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
+const (
+	routeOverview = "/"
+	routeUpdate   = "/update"
+)
+
 type Handler struct {
 	Logger *log.Logger
 
@@ -50,9 +55,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 	switch path.Clean(r.URL.Path) {
-	case "/":
+	case routeOverview:
 		return h.overview(ctx, w, r)
-	case "/update":
+	case routeUpdate:
 		return h.updateFeeds(ctx, w, r)
 	default:
 		return http.StatusNotFound, fmt.Errorf("router: invalid URL %s", r.URL.Path)

@@ -17,7 +17,8 @@ func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *htt
 		return http.StatusBadRequest, err
 	}
 	go h.updateAllFeeds()
-	return http.StatusOK, nil
+	http.Redirect(w, r, routeOverview, http.StatusTemporaryRedirect)
+	return http.StatusTemporaryRedirect, nil
 }
 
 func (h *Handler) ReadFeedPath() error {
