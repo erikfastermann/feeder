@@ -1,0 +1,13 @@
+version: '3'
+services:
+        webapp:
+                build:
+                        context: .
+                container_name: feeder
+                ports:
+                        - "80:80"
+                restart: on-failure
+                volumes:
+                        - feeder:/var/feeder
+volumes:
+        feeder:
