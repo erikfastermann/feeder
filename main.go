@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 4 {
-		fmt.Fprintln(os.Stderr, "USAGE: %s FEED_PATH TEMPLATE_GLOB DB_PATH", os.Args[0])
+	if len(os.Args) != 5 {
+		fmt.Fprintf(os.Stderr, "USAGE: %s ADDRESS FEED_PATH TEMPLATE_GLOB DB_PATH", os.Args[0])
 		os.Exit(1)
 	}
+	addr, feedPath, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
 
-	sqlDB, err := sqlite3.Open(context.TODO(), os.Args[3])
+	sqlDB, err := sqlite3.Open(context.TODO(), dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,15 +28,15 @@ func main() {
 	l := log.New(os.Stderr, "", log.LstdFlags)
 	h := &handler.Handler{
 		Logger:       l,
-		FeedPath:     os.Args[1],
-		TemplateGlob: os.Args[2],
+		FeedPath:     feedPath,
+		TemplateGlob: tmpltGlob,
 		DB:           sqlDB,
 	}
 	if err := h.ReadFeedPath(); err != nil {
 		log.Fatal(err)
 	}
 
-	l.Fatal(http.ListenAndServe("localhost:8080", LogWrapper(ErrorWrapper(h.ServeHTTP), l)))
+	l.Fatal(http.ListenAndServe(addr, LogWrapper(ErrorWrapper(h.ServeHTTP), l)))
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request) (status int, internalErr error)
