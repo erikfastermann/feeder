@@ -41,12 +41,39 @@ type HandlerFunc func(w http.ResponseWriter, r *http.Request) (status int, inter
 
 func ErrorWrapper(fn HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) (int, error) {
-		status, err := fn(w, r)
+		customWriter, ok := w.(*ResponseWriter)
+		if !ok {
+			customWriter = &ResponseWriter{Orig: w}
+		}
+		status, err := fn(customWriter, r)
+		if !customWriter.WroteHeader {
+			customWriter.WriteHeader(status)
+		}
+
 		if status >= 400 {
-			fmt.Fprintf(w, "%d - %s", status, http.StatusText(status))
+			fmt.Fprintf(customWriter, "%d - %s", status, http.StatusText(status))
 		}
 		return status, err
 	}
+}
+
+type ResponseWriter struct {
+	Orig        http.ResponseWriter
+	WroteHeader bool
+}
+
+func (w *ResponseWriter) Header() http.Header {
+	return w.Orig.Header()
+}
+
+func (w *ResponseWriter) WriteHeader(statusCode int) {
+	w.WroteHeader = true
+	w.Orig.WriteHeader(statusCode)
+}
+
+func (w *ResponseWriter) Write(p []byte) (int, error) {
+	w.WroteHeader = true
+	return w.Orig.Write(p)
 }
 
 func LogWrapper(fn HandlerFunc, l *log.Logger) http.HandlerFunc {
