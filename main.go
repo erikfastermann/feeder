@@ -34,10 +34,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	l.Fatal(http.ListenAndServe("localhost:8080", LogWrapper(h.ServeHTTP, l)))
+	l.Fatal(http.ListenAndServe("localhost:8080", LogWrapper(ErrorWrapper(h.ServeHTTP), l)))
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request) (status int, internalErr error)
+
+func ErrorWrapper(fn HandlerFunc) HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) (int, error) {
+		status, err := fn(w, r)
+		if status >= 400 {
+			fmt.Fprintf(w, "%d - %s", status, http.StatusText(status))
+		}
+		return status, err
+	}
+}
 
 func LogWrapper(fn HandlerFunc, l *log.Logger) http.HandlerFunc {
 	if l == nil {
