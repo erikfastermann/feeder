@@ -13,12 +13,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "USAGE: %s FEED_PATH DB_PATH", os.Args[0])
+	if len(os.Args) != 4 {
+		fmt.Fprintln(os.Stderr, "USAGE: %s FEED_PATH TEMPLATE_GLOB DB_PATH", os.Args[0])
 		os.Exit(1)
 	}
 
-	sqlDB, err := sqlite3.Open(context.TODO(), os.Args[2])
+	sqlDB, err := sqlite3.Open(context.TODO(), os.Args[3])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,9 +26,10 @@ func main() {
 
 	l := log.New(os.Stderr, "", log.LstdFlags)
 	h := &handler.Handler{
-		Logger:   l,
-		FeedPath: os.Args[1],
-		DB:       sqlDB,
+		Logger:       l,
+		FeedPath:     os.Args[1],
+		TemplateGlob: os.Args[2],
+		DB:           sqlDB,
 	}
 	if err := h.ReadFeedPath(); err != nil {
 		log.Fatal(err)

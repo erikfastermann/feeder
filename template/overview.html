@@ -1,0 +1,16 @@
+<table>
+	<tr>
+		<th>Author</th>
+		<th>Title</th>
+		<th>Description</th>
+		<th>Last updated</th>
+	</tr>
+	{{ range . }}
+	<tr>
+		<td title="{{ .FeedTitle }}">{{ .Author }}</td>
+		<td><a href="{{ .Link }}">{{ .Title }}</a></td>
+		<td>{{ .Description }}</td>
+		<td>{{ .Updated }}</td>
+	</tr>
+	{{ end }}
+</table>

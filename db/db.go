@@ -18,6 +18,6 @@ type Item struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Link        string    `json:"link"`
-	ImageURL    string    `json:"image_url"`
+	ImageURL    string    `json:"image_url"` // currently unused by the handler
 	Updated     time.Time `json:"updated"`
 }

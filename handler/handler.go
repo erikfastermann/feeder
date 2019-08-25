@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,6 +25,9 @@ type Handler struct {
 	feeds    []kvparser.KeyValue
 	parser   *gofeed.Parser
 
+	TemplateGlob string
+	tmplts       *template.Template
+
 	DB db.DB
 }
 
@@ -32,6 +36,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 		if h.Logger == nil {
 			h.Logger = log.New(ioutil.Discard, "", 0)
 		}
+		h.tmplts = template.Must(template.ParseGlob(h.TemplateGlob))
 
 		h.parser = gofeed.NewParser()
 		go func() {
