@@ -21,7 +21,7 @@ import (
 
 var templateOverview = []byte(``)
 
-type Server struct {
+type Handler struct {
 	Logger *log.Logger
 
 	once     sync.Once
@@ -33,11 +33,11 @@ type Server struct {
 	DB db.DB
 }
 
-func (srv *Server) ReadFeedPath() error {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
+func (h *Handler) ReadFeedPath() error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
-	f, err := os.Open(srv.FeedPath)
+	f, err := os.Open(h.FeedPath)
 	if err != nil {
 		return err
 	}
@@ -47,11 +47,11 @@ func (srv *Server) ReadFeedPath() error {
 	if err != nil {
 		return err
 	}
-	srv.feeds = feeds
+	h.feeds = feeds
 	return nil
 }
 
-func (srv *Server) updateFeed(name, url string) ([]db.Item, error) {
+func (h *Handler) updateFeed(name, url string) ([]db.Item, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (srv *Server) updateFeed(name, url string) ([]db.Item, error) {
 		return nil, err
 	}
 
-	feed, err := srv.parser.Parse(res.Body)
+	feed, err := h.parser.Parse(res.Body)
 	res.Body.Close()
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (srv *Server) updateFeed(name, url string) ([]db.Item, error) {
 	items := make([]db.Item, 0)
 	for _, item := range feed.Items {
 		if item.UpdatedParsed == nil && item.PublishedParsed == nil {
-			srv.Logger.Printf("item %s has an invalid time")
+			h.Logger.Printf("item %s has an invalid time")
 			continue
 		}
 		var t time.Time
@@ -110,7 +110,7 @@ func (srv *Server) updateFeed(name, url string) ([]db.Item, error) {
 		})
 	}
 
-	return srv.DB.AddItems(ctx, items)
+	return h.DB.AddItems(ctx, items)
 }
 
 func checkAuthor(author *gofeed.Person, name string) string {
@@ -120,36 +120,36 @@ func checkAuthor(author *gofeed.Person, name string) string {
 	return name
 }
 
-func (srv *Server) updateAllFeeds() {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
+func (h *Handler) updateAllFeeds() {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 
-	for _, feed := range srv.feeds {
-		added, err := srv.updateFeed(feed.Key, feed.Value)
+	for _, feed := range h.feeds {
+		added, err := h.updateFeed(feed.Key, feed.Value)
 		for _, item := range added {
-			srv.Logger.Printf("feed %s: added %s (%s)",
+			h.Logger.Printf("feed %s: added %s (%s)",
 				feed.Key,
 				strconv.Quote(item.Title),
 				item.Updated,
 			)
 		}
 		if err != nil {
-			srv.Logger.Printf("failed parsing feed %s, %v", feed.Value, err)
+			h.Logger.Printf("failed parsing feed %s, %v", feed.Value, err)
 		}
 	}
 }
 
-func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	srv.once.Do(func() {
-		if srv.Logger == nil {
-			srv.Logger = log.New(ioutil.Discard, "", 0)
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+	h.once.Do(func() {
+		if h.Logger == nil {
+			h.Logger = log.New(ioutil.Discard, "", 0)
 		}
 
-		srv.parser = gofeed.NewParser()
+		h.parser = gofeed.NewParser()
 		go func() {
-			srv.updateAllFeeds()
+			h.updateAllFeeds()
 			for range time.Tick(5 * time.Minute) {
-				srv.updateAllFeeds()
+				h.updateAllFeeds()
 			}
 		}()
 	})
@@ -158,16 +158,16 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error
 	defer cancel()
 	switch path.Clean(r.URL.Path) {
 	case "/":
-		return srv.overview(ctx, w, r)
+		return h.overview(ctx, w, r)
 	case "/update":
-		return srv.updateFeeds(ctx, w, r)
+		return h.updateFeeds(ctx, w, r)
 	default:
 		return http.StatusNotFound, fmt.Errorf("router: invalid URL %s", r.URL.Path)
 	}
 }
 
-func (srv *Server) overview(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, error) {
-	items, err := srv.DB.Newest(ctx, 30)
+func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, error) {
+	items, err := h.DB.Newest(ctx, 30)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -179,11 +179,11 @@ func (srv *Server) overview(ctx context.Context, w http.ResponseWriter, r *http.
 	return http.StatusOK, nil
 }
 
-func (srv *Server) updateFeeds(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, error) {
-	if err := srv.ReadFeedPath(); err != nil {
+func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, error) {
+	if err := h.ReadFeedPath(); err != nil {
 		return http.StatusBadRequest, err
 	}
-	go srv.updateAllFeeds()
+	go h.updateAllFeeds()
 	return http.StatusOK, nil
 }
 
@@ -220,14 +220,14 @@ func main() {
 	defer sqlDB.Close()
 
 	l := log.New(os.Stderr, "", log.LstdFlags)
-	srv := &Server{
+	h := &Handler{
 		Logger:   l,
 		FeedPath: os.Args[1],
 		DB:       sqlDB,
 	}
-	if err := srv.ReadFeedPath(); err != nil {
+	if err := h.ReadFeedPath(); err != nil {
 		log.Fatal(err)
 	}
 
-	l.Fatal(http.ListenAndServe("localhost:8080", LogWrapper(srv.ServeHTTP, l)))
+	l.Fatal(http.ListenAndServe("localhost:8080", LogWrapper(h.ServeHTTP, l)))
 }
