@@ -1,4 +1,4 @@
 {{ range . }}
 {{ $host := FormatHost .Link }}
-<p><b><a href="{{ .Link }}">{{ .Title }}</b></a> (<a href="{{ printf "http://%s" $host }}">{{ $host }}</a>)<br>{{ .FeedID }} | {{ .ID }} | {{ .Author }} | {{ .Added }}</p>
+<p><b><a href="{{ .Link }}">{{ .Title }}</b></a> (<a href="{{ printf "http://%s" $host }}">{{ $host }}</a>)<br>{{ .Added }}</p>
 {{ end }}
