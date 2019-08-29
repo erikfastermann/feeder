@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"path"
 	"sync"
 	"time"
@@ -41,7 +42,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 		if h.Logger == nil {
 			h.Logger = log.New(ioutil.Discard, "", 0)
 		}
-		h.tmplts = template.Must(template.ParseGlob(h.TemplateGlob))
+
+		funcMap := template.FuncMap{
+			"FormatHost": formatHost,
+		}
+		h.tmplts = template.Must(template.New("").Funcs(funcMap).ParseGlob(h.TemplateGlob))
 
 		h.parser = gofeed.NewParser()
 		go func() {
@@ -62,4 +67,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	default:
 		return http.StatusNotFound, fmt.Errorf("router: invalid URL %s", r.URL.Path)
 	}
+}
+
+func formatHost(uri string) string {
+	parsed, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return ""
+	}
+	return parsed.Host
 }

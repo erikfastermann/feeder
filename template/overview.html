@@ -1,16 +1,4 @@
-<table>
-	<tr>
-		<th>Author</th>
-		<th>Title</th>
-		<th>Description</th>
-		<th>Last updated</th>
-	</tr>
-	{{ range . }}
-	<tr>
-		<td title="{{ .FeedTitle }}">{{ .Author }}</td>
-		<td><a href="{{ .Link }}">{{ .Title }}</a></td>
-		<td>{{ .Description }}</td>
-		<td>{{ .Updated }}</td>
-	</tr>
-	{{ end }}
-</table>
+{{ range . }}
+{{ $host := FormatHost .Link }}
+<p><b><a href="{{ .Link }}">{{ .Title }}</b></a> (<a href="{{ printf "http://%s" $host }}">{{ $host }}</a>)<br>{{ .FeedTitle }} | {{ .Author }} | {{ .Updated }}</p>
+{{ end }}
