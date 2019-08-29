@@ -13,28 +13,22 @@ import (
 	"time"
 
 	"github.com/erikfastermann/feeder/db"
-	"github.com/erikfastermann/kvparser"
 	"github.com/mmcdole/gofeed"
 )
 
 const (
 	routeOverview = "/"
 	routeUpdate   = "/update"
+	routeAdd      = "/add"
 )
 
 type Handler struct {
-	Logger *log.Logger
-
-	once     sync.Once
-	FeedPath string
-	mu       sync.RWMutex
-	feeds    []kvparser.KeyValue
-	parser   *gofeed.Parser
-
+	once         sync.Once
+	Logger       *log.Logger
+	parser       *gofeed.Parser
 	TemplateGlob string
 	tmplts       *template.Template
-
-	DB db.DB
+	DB           db.DB
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
@@ -50,9 +44,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 
 		h.parser = gofeed.NewParser()
 		go func() {
-			h.updateAllFeeds()
+			h.updateAllFeedItems()
 			for range time.Tick(5 * time.Minute) {
-				h.updateAllFeeds()
+				h.updateAllFeedItems()
 			}
 		}()
 	})
@@ -64,6 +58,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 		return h.overview(ctx, w, r)
 	case routeUpdate:
 		return h.updateFeeds(ctx, w, r)
+	case routeAdd:
+		return h.addFeed(ctx, w, r)
 	default:
 		return http.StatusNotFound, fmt.Errorf("router: invalid URL %s", r.URL.Path)
 	}

@@ -13,11 +13,11 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 5 {
-		fmt.Fprintf(os.Stderr, "USAGE: %s ADDRESS FEED_PATH TEMPLATE_GLOB DB_PATH\n", os.Args[0])
+	if len(os.Args) != 4 {
+		fmt.Fprintf(os.Stderr, "USAGE: %s ADDRESS TEMPLATE_GLOB DB_PATH\n", os.Args[0])
 		os.Exit(1)
 	}
-	addr, feedPath, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+	addr, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3]
 
 	sqlDB, err := sqlite3.Open(context.TODO(), dbPath)
 	if err != nil {
@@ -28,12 +28,8 @@ func main() {
 	l := log.New(os.Stderr, "", log.LstdFlags)
 	h := &handler.Handler{
 		Logger:       l,
-		FeedPath:     feedPath,
 		TemplateGlob: tmpltGlob,
 		DB:           sqlDB,
-	}
-	if err := h.ReadFeedPath(); err != nil {
-		log.Fatal(err)
 	}
 
 	l.Fatal(http.ListenAndServe(addr, LogWrapper(ErrorWrapper(h.ServeHTTP), l)))
