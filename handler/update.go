@@ -52,7 +52,7 @@ func (h *Handler) updateAllFeeds() {
 			h.Logger.Printf("feed %s: added %s (%s)",
 				feed.Key,
 				strconv.Quote(item.Title),
-				item.Updated,
+				item.Added,
 			)
 		}
 		if err != nil {
@@ -109,7 +109,7 @@ func (h *Handler) updateFeed(name, url string) ([]db.Item, error) {
 			Description: item.Description,
 			Content:     item.Content,
 			Link:        item.Link,
-			Updated:     t,
+			Added:       t,
 		})
 	}
 

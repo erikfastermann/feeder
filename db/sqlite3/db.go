@@ -30,7 +30,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 		content TEXT NOT NULL,
 		link VARCHAR(63) NOT NULL,
 		image_url VARCHAR(63) NOT NULL,
-		updated DATETIME NOT NULL
+		added DATETIME NOT NULL
 	)`)
 	if err != nil {
 		return nil, err
@@ -41,9 +41,9 @@ func Open(ctx context.Context, path string) (*DB, error) {
 
 func (sqlDB *DB) Newest(ctx context.Context, n uint) ([]db.Item, error) {
 	rows, err := sqlDB.QueryContext(ctx, `SELECT feed_title, author, title,
-		description, content, link, image_url, updated
+		description, content, link, image_url, added
 		FROM items
-		ORDER BY updated DESC
+		ORDER BY added DESC
 		LIMIT ?`, n)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (sqlDB *DB) Newest(ctx context.Context, n uint) ([]db.Item, error) {
 	for rows.Next() {
 		var item db.Item
 		err := rows.Scan(&item.FeedTitle, &item.Author, &item.Title,
-			&item.Description, &item.Content, &item.Link, &item.ImageURL, &item.Updated)
+			&item.Description, &item.Content, &item.Link, &item.ImageURL, &item.Added)
 		if err != nil {
 			return items, err
 		}
@@ -72,8 +72,8 @@ func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, erro
 			var count int
 			err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
 				FROM items
-				WHERE title=? AND updated=?`,
-				item.Title, item.Updated).Scan(&count)
+				WHERE title=? AND added=?`,
+				item.Title, item.Added).Scan(&count)
 			if err != nil {
 				return err
 			}
@@ -82,10 +82,10 @@ func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, erro
 			}
 
 			_, err = sqlDB.ExecContext(ctx, `INSERT INTO
-				items(feed_title, author, title, description, content, link, image_url, updated)
+				items(feed_title, author, title, description, content, link, image_url, added)
 				VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
 				item.FeedTitle, item.Author, item.Title,
-				item.Description, item.Content, item.Link, item.ImageURL, item.Updated)
+				item.Description, item.Content, item.Link, item.ImageURL, item.Added)
 			if err != nil {
 				return err
 			}

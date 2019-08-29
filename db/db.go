@@ -20,5 +20,5 @@ type Item struct {
 	Content     string    `json:"content"`
 	Link        string    `json:"link"`
 	ImageURL    string    `json:"image_url"` // currently unused by the handler
-	Updated     time.Time `json:"updated"`
+	Added       time.Time `json:"added"`
 }
