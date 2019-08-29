@@ -55,6 +55,29 @@ func Open(ctx context.Context, path string) (*DB, error) {
 	return &DB{sqlDB}, nil
 }
 
+func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
+	rows, err := sqlDB.QueryContext(ctx, `SELECT _rowid_, author, title, language,
+		description, link, feed_link, image_url, last_updated
+		FROM feeds`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	feeds := make([]db.Feed, 0)
+	for rows.Next() {
+		var feed db.Feed
+		err := rows.Scan(&feed.ID, &feed.Author, &feed.Title, &feed.Language,
+			&feed.Description, &feed.Link, &feed.FeedLink, &feed.ImageURL, &feed.LastUpdated)
+		if err != nil {
+			return feeds, err
+		}
+		feeds = append(feeds, feed)
+	}
+
+	return feeds, rows.Err()
+}
+
 func (sqlDB *DB) Newest(ctx context.Context, n uint) ([]db.Item, error) {
 	rows, err := sqlDB.QueryContext(ctx, `SELECT _rowid_, feed, author, title, description,
 		content, link, image_url, added

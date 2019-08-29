@@ -13,6 +13,7 @@ type DB interface {
 	AddFeed(ctx context.Context, feed Feed) (feedID int64, err error)
 	AddItems(ctx context.Context, items []Item) (addedItems []Item, err error)
 
+	AllFeeds(ctx context.Context) ([]Feed, error)
 	Newest(ctx context.Context, n uint) ([]Item, error)
 }
 
