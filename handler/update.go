@@ -84,6 +84,22 @@ func (h *Handler) updateFeed(name, url string) ([]db.Item, error) {
 	}
 	feedAuthor := checkAuthor(feed.Author, name)
 
+	feedID, err := h.DB.AddFeed(ctx, db.Feed{
+		Author:      feedAuthor,
+		Title:       feed.Title,
+		Language:    feed.Language,
+		Description: feed.Description,
+		Link:        feed.Link,
+		FeedLink:    url,
+		LastUpdated: db.NullTime{
+			Valid: true,
+			Time:  time.Now(),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	if len(feed.Items) == 0 {
 		return nil, nil
 	}
@@ -103,7 +119,7 @@ func (h *Handler) updateFeed(name, url string) ([]db.Item, error) {
 		author := checkAuthor(item.Author, feedAuthor)
 
 		items = append(items, db.Item{
-			FeedTitle:   name,
+			FeedID:      feedID,
 			Author:      author,
 			Title:       item.Title,
 			Description: item.Description,
