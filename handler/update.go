@@ -102,20 +102,12 @@ func (h *Handler) updateFeed(name, url string) ([]db.Item, error) {
 
 		author := checkAuthor(item.Author, feedAuthor)
 
-		desc := item.Description
-		if desc == "" {
-			desc = item.Content
-		}
-		if len(desc) > 300 {
-			desc = desc[:300] + "..."
-		}
-		desc = removeHTMLTags(desc)
-
 		items = append(items, db.Item{
 			FeedTitle:   name,
 			Author:      author,
 			Title:       item.Title,
-			Description: desc,
+			Description: item.Description,
+			Content:     item.Content,
 			Link:        item.Link,
 			Updated:     t,
 		})

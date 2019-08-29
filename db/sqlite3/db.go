@@ -27,6 +27,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 		author VARCHAR(32) NOT NULL,
 		title VARCHAR(32) NOT NULL,
 		description TEXT NOT NULL,
+		content TEXT NOT NULL,
 		link VARCHAR(63) NOT NULL,
 		image_url VARCHAR(63) NOT NULL,
 		updated DATETIME NOT NULL
@@ -40,7 +41,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 
 func (sqlDB *DB) Newest(ctx context.Context, n uint) ([]db.Item, error) {
 	rows, err := sqlDB.QueryContext(ctx, `SELECT feed_title, author, title,
-		description, link, image_url, updated
+		description, content, link, image_url, updated
 		FROM items
 		ORDER BY updated DESC
 		LIMIT ?`, n)
@@ -53,7 +54,7 @@ func (sqlDB *DB) Newest(ctx context.Context, n uint) ([]db.Item, error) {
 	for rows.Next() {
 		var item db.Item
 		err := rows.Scan(&item.FeedTitle, &item.Author, &item.Title,
-			&item.Description, &item.Link, &item.ImageURL, &item.Updated)
+			&item.Description, &item.Content, &item.Link, &item.ImageURL, &item.Updated)
 		if err != nil {
 			return items, err
 		}
@@ -81,10 +82,10 @@ func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, erro
 			}
 
 			_, err = sqlDB.ExecContext(ctx, `INSERT INTO
-				items(feed_title, author, title, description, link, image_url, updated)
-				VALUES(?, ?, ?, ?, ?, ?, ?)`,
+				items(feed_title, author, title, description, content, link, image_url, updated)
+				VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
 				item.FeedTitle, item.Author, item.Title,
-				item.Description, item.Link, item.ImageURL, item.Updated)
+				item.Description, item.Content, item.Link, item.ImageURL, item.Updated)
 			if err != nil {
 				return err
 			}

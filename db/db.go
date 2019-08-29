@@ -17,6 +17,7 @@ type Item struct {
 	Author      string    `json:"author"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
+	Content     string    `json:"content"`
 	Link        string    `json:"link"`
 	ImageURL    string    `json:"image_url"` // currently unused by the handler
 	Updated     time.Time `json:"updated"`
