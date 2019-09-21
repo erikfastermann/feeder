@@ -13,10 +13,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, error) {
+func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	go h.updateAllFeedItems()
 	http.Redirect(w, r, routeOverview, http.StatusTemporaryRedirect)
-	return http.StatusTemporaryRedirect, nil
+	return nil
 }
 
 func (h *Handler) updateAllFeedItems() {

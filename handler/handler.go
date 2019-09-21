@@ -9,17 +9,19 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/erikfastermann/feeder/db"
+	"github.com/erikfastermann/httpwrap"
 	"github.com/mmcdole/gofeed"
 )
 
 const (
 	routeOverview = "/"
 	routeUpdate   = "/update"
-	routeAdd      = "/add"
+	routeAdd      = "add"
 )
 
 type Handler struct {
@@ -27,11 +29,12 @@ type Handler struct {
 	Logger       *log.Logger
 	parser       *gofeed.Parser
 	TemplateGlob string
+	AddPrefix    string
 	tmplts       *template.Template
 	DB           db.DB
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error {
 	h.once.Do(func() {
 		if h.Logger == nil {
 			h.Logger = log.New(ioutil.Discard, "", 0)
@@ -41,6 +44,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 			"FormatHost": formatHost,
 		}
 		h.tmplts = template.Must(template.New("").Funcs(funcMap).ParseGlob(h.TemplateGlob))
+		if h.AddPrefix != "" {
+			h.AddPrefix = "/" + h.AddPrefix + "-"
+		}
 
 		h.parser = gofeed.NewParser()
 		go func() {
@@ -53,15 +59,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	switch path.Clean(r.URL.Path) {
-	case routeOverview:
+
+	cleanPath := path.Clean(r.URL.Path)
+	base, _ := splitURL(cleanPath)
+	switch {
+	case cleanPath == routeOverview:
 		return h.overview(ctx, w, r)
-	case routeUpdate:
+	case cleanPath == routeUpdate:
 		return h.updateFeeds(ctx, w, r)
-	case routeAdd:
+	case base == h.AddPrefix+routeAdd:
 		return h.addFeed(ctx, w, r)
 	default:
-		return http.StatusNotFound, fmt.Errorf("router: invalid URL %s", r.URL.Path)
+		return httpwrap.Error{
+			StatusCode: http.StatusNotFound,
+			Err:        fmt.Errorf("router: invalid URL %s", r.URL.Path),
+		}
 	}
 }
 
@@ -71,4 +83,13 @@ func formatHost(uri string) string {
 		return ""
 	}
 	return parsed.Host
+}
+
+func splitURL(url string) (string, string) {
+	split := strings.SplitN(url[1:], "/", 2)
+	split[0] = "/" + split[0]
+	if len(split) == 1 {
+		return split[0], "/"
+	}
+	return split[0], "/" + split[1]
 }

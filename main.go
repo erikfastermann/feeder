@@ -3,25 +3,34 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/erikfastermann/feeder/db/sqlite3"
 	"github.com/erikfastermann/feeder/handler"
+	"github.com/erikfastermann/httpwrap"
 )
 
 func main() {
-	if len(os.Args) != 4 {
-		fmt.Fprintf(os.Stderr, "USAGE: %s ADDRESS TEMPLATE_GLOB DB_PATH\n", os.Args[0])
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	addr, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3]
+}
 
-	sqlDB, err := sqlite3.Open(context.TODO(), dbPath)
+func run() error {
+	if len(os.Args) != 5 {
+		return fmt.Errorf("USAGE: %s ADDRESS TEMPLATE_GLOB ADD_PREFIX DB_PATH", os.Args[0])
+	}
+	addr, tmpltGlob, addPrefix, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	sqlDB, err := sqlite3.Open(ctx, dbPath)
+	cancel()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer sqlDB.Close()
 
@@ -29,65 +38,8 @@ func main() {
 	h := &handler.Handler{
 		Logger:       l,
 		TemplateGlob: tmpltGlob,
+		AddPrefix:    addPrefix,
 		DB:           sqlDB,
 	}
-
-	l.Fatal(http.ListenAndServe(addr, LogWrapper(ErrorWrapper(h.ServeHTTP), l)))
-}
-
-type HandlerFunc func(w http.ResponseWriter, r *http.Request) (status int, internalErr error)
-
-func ErrorWrapper(fn HandlerFunc) HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) (int, error) {
-		customWriter, ok := w.(*ResponseWriter)
-		if !ok {
-			customWriter = &ResponseWriter{Orig: w}
-		}
-		status, err := fn(customWriter, r)
-		if !customWriter.WroteHeader {
-			customWriter.WriteHeader(status)
-		}
-
-		if status >= 400 {
-			fmt.Fprintf(customWriter, "%d - %s", status, http.StatusText(status))
-		}
-		return status, err
-	}
-}
-
-type ResponseWriter struct {
-	Orig        http.ResponseWriter
-	WroteHeader bool
-}
-
-func (w *ResponseWriter) Header() http.Header {
-	return w.Orig.Header()
-}
-
-func (w *ResponseWriter) WriteHeader(statusCode int) {
-	w.WroteHeader = true
-	w.Orig.WriteHeader(statusCode)
-}
-
-func (w *ResponseWriter) Write(p []byte) (int, error) {
-	w.WroteHeader = true
-	return w.Orig.Write(p)
-}
-
-func LogWrapper(fn HandlerFunc, l *log.Logger) http.HandlerFunc {
-	if l == nil {
-		l = log.New(ioutil.Discard, "", 0)
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		status, err := fn(w, r)
-		l.Printf("%s|%s %s|%d - %s|%v",
-			r.RemoteAddr,
-			r.Method,
-			r.URL.Path,
-			status,
-			http.StatusText(status),
-			err,
-		)
-	}
+	return http.ListenAndServe(addr, httpwrap.LogCustom(httpwrap.HandleError(h), l))
 }
