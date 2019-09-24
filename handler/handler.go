@@ -21,7 +21,7 @@ import (
 const (
 	routeOverview = "/"
 	routeUpdate   = "/update"
-	routeAdd      = "add"
+	routeAdd      = "/add"
 )
 
 type Handler struct {
@@ -29,7 +29,7 @@ type Handler struct {
 	Logger       *log.Logger
 	parser       *gofeed.Parser
 	TemplateGlob string
-	AddPrefix    string
+	AddSuffix    string
 	tmplts       *template.Template
 	DB           db.DB
 }
@@ -44,8 +44,8 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 			"FormatHost": formatHost,
 		}
 		h.tmplts = template.Must(template.New("").Funcs(funcMap).ParseGlob(h.TemplateGlob))
-		if h.AddPrefix != "" {
-			h.AddPrefix = "/" + h.AddPrefix + "-"
+		if h.AddSuffix != "" {
+			h.AddSuffix = "-" + h.AddSuffix
 		}
 
 		h.parser = gofeed.NewParser()
@@ -67,7 +67,7 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		return h.overview(ctx, w, r)
 	case cleanPath == routeUpdate:
 		return h.updateFeeds(ctx, w, r)
-	case base == h.AddPrefix+routeAdd:
+	case base == routeAdd+h.AddSuffix:
 		return h.addFeed(ctx, w, r)
 	default:
 		return httpwrap.Error{

@@ -22,9 +22,9 @@ func main() {
 
 func run() error {
 	if len(os.Args) != 5 {
-		return fmt.Errorf("USAGE: %s ADDRESS TEMPLATE_GLOB ADD_PREFIX DB_PATH", os.Args[0])
+		return fmt.Errorf("USAGE: %s ADDRESS TEMPLATE_GLOB ADD_SUFFIX DB_PATH", os.Args[0])
 	}
-	addr, tmpltGlob, addPrefix, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+	addr, tmpltGlob, addSuffix, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	sqlDB, err := sqlite3.Open(ctx, dbPath)
@@ -38,7 +38,7 @@ func run() error {
 	h := &handler.Handler{
 		Logger:       l,
 		TemplateGlob: tmpltGlob,
-		AddPrefix:    addPrefix,
+		AddSuffix:    addSuffix,
 		DB:           sqlDB,
 	}
 	return http.ListenAndServe(addr, httpwrap.LogCustom(httpwrap.HandleError(h), l))
