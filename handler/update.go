@@ -20,8 +20,9 @@ func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 func (h *Handler) updateAllFeedItems() {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	feeds, err := h.DB.AllFeeds(ctx)
+	cancel()
 	if err != nil {
 		h.Logger.Print(err)
 		if feeds == nil {
@@ -60,7 +61,8 @@ func (h *Handler) doUpdateFeedItems(feedID int64, feedLink string) ([]db.Item, e
 	if err != nil {
 		return nil, err
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	return h.DB.AddItems(ctx, items)
 }
 
