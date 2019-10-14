@@ -99,7 +99,7 @@ func (h *Handler) parseItems(feed *gofeed.Feed, feedID int64) ([]db.Item, error)
 	items := make([]db.Item, 0)
 	for _, item := range feed.Items {
 		if item.UpdatedParsed == nil && item.PublishedParsed == nil {
-			h.Logger.Printf("item %s has an invalid time")
+			h.Logger.Printf("item %s has an invalid time", item.Title)
 			continue
 		}
 		var t time.Time
