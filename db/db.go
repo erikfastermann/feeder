@@ -14,7 +14,7 @@ type DB interface {
 	AddItems(ctx context.Context, items []Item) (addedItems []Item, err error)
 
 	AllFeeds(ctx context.Context) ([]Feed, error)
-	Newest(ctx context.Context, n uint) ([]Item, error)
+	Newest(ctx context.Context, offset, limit uint) ([]Item, error)
 }
 
 type Feed struct {

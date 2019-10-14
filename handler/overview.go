@@ -6,7 +6,7 @@ import (
 )
 
 func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	items, err := h.DB.Newest(ctx, 30)
+	items, err := h.DB.Newest(ctx, 0, 30)
 	if err != nil {
 		return err
 	}

@@ -78,12 +78,13 @@ func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 	return feeds, rows.Err()
 }
 
-func (sqlDB *DB) Newest(ctx context.Context, n uint) ([]db.Item, error) {
+func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, error) {
 	rows, err := sqlDB.QueryContext(ctx, `SELECT _rowid_, feed, author, title, description,
 		content, link, image_url, added
 		FROM items
 		ORDER BY added DESC
-		LIMIT ?`, n)
+		LIMIT ?
+		OFFSET ?`, limit, offset)
 	if err != nil {
 		return nil, err
 	}
