@@ -9,7 +9,7 @@ import (
 type DB interface {
 	Close() error
 
-	AddFeed(ctx context.Context, url, feedURL string) (feedID int64, err error)
+	AddFeed(ctx context.Context, host, feedURL string) (feedID int64, err error)
 	AddItems(ctx context.Context, feedID int64, items []Item) (err error)
 
 	AllFeeds(ctx context.Context) ([]Feed, error)
@@ -18,7 +18,7 @@ type DB interface {
 
 type Feed struct {
 	ID          int64
-	URL         string
+	Host        string
 	FeedURL     string
 	LastChecked sql.NullTime
 	LastUpdated sql.NullTime

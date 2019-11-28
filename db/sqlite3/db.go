@@ -24,7 +24,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 
 	_, err = sqlDB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS feeds (
 		id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-		url TEXT NOT NULL,
+		host TEXT NOT NULL,
 		feed_url TEXT NOT NULL,
 		last_checked DATETIME
 		last_updated DATETIME
@@ -49,7 +49,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 }
 
 func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
-	rows, err := sqlDB.QueryContext(ctx, `SELECT id, url, feed_url, last_checked, last_updated
+	rows, err := sqlDB.QueryContext(ctx, `SELECT id, host, feed_url, last_checked, last_updated
 		FROM feeds`)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 	feeds := make([]db.Feed, 0)
 	for rows.Next() {
 		var feed db.Feed
-		err := rows.Scan(&feed.ID, &feed.URL, &feed.FeedURL, &feed.LastChecked, &feed.LastUpdated)
+		err := rows.Scan(&feed.ID, &feed.Host, &feed.FeedURL, &feed.LastChecked, &feed.LastUpdated)
 		if err != nil {
 			return feeds, err
 		}
@@ -93,7 +93,7 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, err
 	return items, rows.Err()
 }
 
-func (sqlDB *DB) AddFeed(ctx context.Context, url, feedURL string) (int64, error) {
+func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, error) {
 	id := int64(-1)
 	err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		var count int
@@ -109,9 +109,9 @@ func (sqlDB *DB) AddFeed(ctx context.Context, url, feedURL string) (int64, error
 		}
 
 		res, err := sqlDB.ExecContext(ctx, `INSERT INTO
-			feeds(url, feed_url, last_checked, last_updated)
+			feeds(host, feed_url, last_checked, last_updated)
 			VALUES(?, ?, ?, ?)`,
-			url, feedURL, nil, nil)
+			host, feedURL, nil, nil)
 		if err != nil {
 			return err
 		}
