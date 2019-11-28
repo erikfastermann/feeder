@@ -3,6 +3,7 @@ package sqlite3
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/erikfastermann/feeder/db"
 	_ "github.com/mattn/go-sqlite3"
@@ -126,7 +127,8 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 }
 
 func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) error {
-	err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
+	didUpdate := false
+	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		for _, item := range items {
 			var count int
 			err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
@@ -140,21 +142,32 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) er
 				continue
 			}
 
-			res, err := sqlDB.ExecContext(ctx, `INSERT INTO
+			_, err = sqlDB.ExecContext(ctx, `INSERT INTO
 				items(feed_id, title, url, added)
 				VALUES(?, ?, ?, ?)`,
 				feedID, item.Title, item.URL, item.Added)
 			if err != nil {
 				return err
 			}
-			item.ID, err = res.LastInsertId()
+			didUpdate = true
+		}
+
+		now := time.Now()
+		if didUpdate {
+			_, err := sqlDB.ExecContext(ctx, `UPDATE feeds
+				SET last_updated=?
+				WHERE id=?`,
+				now, feedID)
 			if err != nil {
 				return err
 			}
 		}
-		return nil
+		_, err := sqlDB.ExecContext(ctx, `UPDATE feeds
+			SET last_checked=?
+			WHERE id=?`,
+			now, feedID)
+		return err
 	})
-	return err
 }
 
 func (sqlDB *DB) asTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
