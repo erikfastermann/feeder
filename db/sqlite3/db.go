@@ -73,7 +73,7 @@ func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.ItemWithHost, error) {
 	rows, err := sqlDB.QueryContext(ctx, `SELECT i.id, i.feed_id, i.title, i.url, i.added, f.host
 		FROM feeds AS f, items AS i
-		WHEERE i.feed_id = f.id
+		WHERE i.feed_id = f.id
 		ORDER BY i.added DESC
 		LIMIT ?
 		OFFSET ?`, limit, offset)
