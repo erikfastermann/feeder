@@ -111,8 +111,8 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 		}
 
 		res, err := sqlDB.ExecContext(ctx, `INSERT INTO
-			feeds(host, feed_url, last_checked, last_updated)
-			VALUES(?, ?, ?, ?)`,
+			feeds(host, feed_url)
+			VALUES(?, ?)`,
 			host, feedURL, nil, nil)
 		if err != nil {
 			return err
