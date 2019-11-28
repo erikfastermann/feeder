@@ -49,8 +49,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 }
 
 func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
-	rows, err := sqlDB.QueryContext(ctx, `SELECT _rowid_, author, title, language,
-		description, link, feed_link, image_url, last_updated
+	rows, err := sqlDB.QueryContext(ctx, `SELECT id, url, feed_url, last_checked, last_updated
 		FROM feeds`)
 	if err != nil {
 		return nil, err
@@ -60,8 +59,7 @@ func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 	feeds := make([]db.Feed, 0)
 	for rows.Next() {
 		var feed db.Feed
-		err := rows.Scan(&feed.ID, &feed.Author, &feed.Title, &feed.Language,
-			&feed.Description, &feed.Link, &feed.FeedLink, &feed.ImageURL, &feed.LastUpdated)
+		err := rows.Scan(&feed.ID, &feed.URL, &feed.FeedURL, &feed.LastChecked, &feed.LastUpdated)
 		if err != nil {
 			return feeds, err
 		}
@@ -72,8 +70,7 @@ func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 }
 
 func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, error) {
-	rows, err := sqlDB.QueryContext(ctx, `SELECT _rowid_, feed, author, title, description,
-		content, link, image_url, added
+	rows, err := sqlDB.QueryContext(ctx, `SELECT id, feed_id, title, url, added
 		FROM items
 		ORDER BY added DESC
 		LIMIT ?
@@ -86,8 +83,7 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, err
 	items := make([]db.Item, 0)
 	for rows.Next() {
 		var item db.Item
-		err := rows.Scan(&item.ID, &item.FeedID, &item.Author, &item.Title,
-			&item.Description, &item.Content, &item.Link, &item.ImageURL, &item.Added)
+		err := rows.Scan(&item.ID, &item.FeedID, &item.Title, &item.URL, &item.Added)
 		if err != nil {
 			return items, err
 		}
@@ -103,8 +99,8 @@ func (sqlDB *DB) AddFeed(ctx context.Context, feed db.Feed) (int64, error) {
 		var count int
 		err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
 			FROM feeds
-			WHERE feed_link=?`,
-			feed.Link).Scan(&count)
+			WHERE feed_url=?`,
+			feed.URL).Scan(&count)
 		if err != nil {
 			return err
 		}
@@ -113,11 +109,9 @@ func (sqlDB *DB) AddFeed(ctx context.Context, feed db.Feed) (int64, error) {
 		}
 
 		res, err := sqlDB.ExecContext(ctx, `INSERT INTO
-			feeds(author, title, language, description,
-			link, feed_link, image_url, last_updated)
-			VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
-			feed.Author, feed.Title, feed.Language, feed.Description,
-			feed.Link, feed.FeedLink, feed.ImageURL, feed.LastUpdated)
+			feeds(url, feed_url, last_checked, last_updated)
+			VALUES(?, ?, ?, ?)`,
+			feed.URL, feed.FeedURL, feed.LastChecked, feed.LastUpdated)
 		if err != nil {
 			return err
 		}
@@ -148,10 +142,9 @@ func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, erro
 			}
 
 			res, err := sqlDB.ExecContext(ctx, `INSERT INTO
-				items(feed, author, title, description, content, link, image_url, added)
-				VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
-				item.FeedID, item.Author, item.Title,
-				item.Description, item.Content, item.Link, item.ImageURL, item.Added)
+				items(feed_id, title, url, added)
+				VALUES(?, ?, ?, ?)`,
+				item.FeedID, item.Title, item.URL, item.Added)
 			if err != nil {
 				return err
 			}
