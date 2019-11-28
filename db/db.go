@@ -13,7 +13,7 @@ type DB interface {
 	AddItems(ctx context.Context, feedID int64, items []Item) (err error)
 
 	AllFeeds(ctx context.Context) ([]Feed, error)
-	Newest(ctx context.Context, offset, limit uint) ([]Item, error)
+	Newest(ctx context.Context, offset, limit uint) ([]ItemWithHost, error)
 }
 
 type Feed struct {
@@ -30,4 +30,9 @@ type Item struct {
 	Title  string
 	URL    string
 	Added  time.Time
+}
+
+type ItemWithHost struct {
+	Item
+	Host string
 }

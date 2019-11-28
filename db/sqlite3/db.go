@@ -69,10 +69,11 @@ func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 	return feeds, rows.Err()
 }
 
-func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, error) {
-	rows, err := sqlDB.QueryContext(ctx, `SELECT id, feed_id, title, url, added
-		FROM items
-		ORDER BY added DESC
+func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.ItemWithHost, error) {
+	rows, err := sqlDB.QueryContext(ctx, `SELECT i.id, i.feed_id, i.title, i.url, i.added, f.host
+		FROM feeds AS f, items AS i
+		WHEERE i.feed_id = f.id
+		ORDER BY i.added DESC
 		LIMIT ?
 		OFFSET ?`, limit, offset)
 	if err != nil {
@@ -80,10 +81,10 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, err
 	}
 	defer rows.Close()
 
-	items := make([]db.Item, 0)
+	items := make([]db.ItemWithHost, 0)
 	for rows.Next() {
-		var item db.Item
-		err := rows.Scan(&item.ID, &item.FeedID, &item.Title, &item.URL, &item.Added)
+		var item db.ItemWithHost
+		err := rows.Scan(&item.ID, &item.FeedID, &item.Title, &item.URL, &item.Added, &item.Host)
 		if err != nil {
 			return items, err
 		}
