@@ -59,7 +59,7 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 	split := strings.Split(path.Clean(r.URL.Path), "/")
 	route := "/"
 	if len(split) > 1 {
-		route = split[1]
+		route = "/" + split[1]
 	}
 
 	switch route {
