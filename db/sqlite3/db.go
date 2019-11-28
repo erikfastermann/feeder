@@ -27,7 +27,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 		host TEXT NOT NULL,
 		feed_url TEXT NOT NULL,
-		last_checked DATETIME
+		last_checked DATETIME,
 		last_updated DATETIME
 	)`)
 	if err != nil {
