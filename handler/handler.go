@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"path"
 	"strings"
 	"sync"
@@ -40,10 +39,7 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 			h.Logger = log.New(ioutil.Discard, "", 0)
 		}
 
-		funcMap := template.FuncMap{
-			"FormatHost": formatHost,
-		}
-		h.tmplts = template.Must(template.New("").Funcs(funcMap).ParseGlob(h.TemplateGlob))
+		h.tmplts = template.Must(template.ParseGlob(h.TemplateGlob))
 		if h.AddSuffix != "" {
 			h.AddSuffix = "-" + h.AddSuffix
 		}
@@ -79,12 +75,4 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 			Err:        fmt.Errorf("router: invalid URL %s", r.URL.Path),
 		}
 	}
-}
-
-func formatHost(uri string) string {
-	parsed, err := url.ParseRequestURI(uri)
-	if err != nil {
-		return ""
-	}
-	return parsed.Host
 }
