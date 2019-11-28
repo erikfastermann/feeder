@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -47,8 +48,7 @@ func (h *Handler) getItems(feedURL string) ([]db.Item, error) {
 	items := make([]db.Item, 0)
 	for _, item := range feed.Items {
 		if item.UpdatedParsed == nil && item.PublishedParsed == nil {
-			h.Logger.Printf("item %s has an invalid time", item.Title) // TODO: How to handle this error?
-			continue
+			return nil, fmt.Errorf("item %s has an invalid time", item.Title)
 		}
 		var t time.Time
 		if item.PublishedParsed != nil {
