@@ -9,31 +9,20 @@ import (
 )
 
 func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	_, remainder := splitURL(r.URL.Path)
-	feedLink := buildFeedURL(remainder[1:], r.URL.RawQuery, r.URL.Fragment)
-	feed, err := h.getFeed(feedLink)
+	feedURL := r.FormValue("url")
+	feed, err := h.getFeed(feedURL)
 	if err != nil {
 		return httpwrap.Error{
 			StatusCode: http.StatusBadRequest,
-			Err:        fmt.Errorf("add: failed parsing feed %s, %v", feedLink, err),
+			Err:        fmt.Errorf("add: failed parsing feed %s, %v", feedURL, err),
 		}
 	}
-	id, err := h.DB.AddFeed(ctx, parseFeed(feed, feedLink))
+	id, err := h.DB.AddFeed(ctx, parseFeed(feed, feedURL))
 	if err != nil {
-		return fmt.Errorf("add: failed storing feed %s, %v", feedLink, err)
+		return fmt.Errorf("add: failed storing feed %s, %v", feedURL, err)
 	}
-	go h.updateFeedItems(id, feedLink)
+	go h.updateFeedItems(id, feedURL)
 
 	http.Redirect(w, r, routeOverview, http.StatusTemporaryRedirect)
 	return nil
-}
-
-func buildFeedURL(path, rawQuery, fragment string) string {
-	if rawQuery != "" {
-		path += "?" + rawQuery
-	}
-	if fragment != "" {
-		path += "#" + fragment
-	}
-	return path
 }

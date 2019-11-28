@@ -60,14 +60,18 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	cleanPath := path.Clean(r.URL.Path)
-	base, _ := splitURL(cleanPath)
-	switch {
-	case cleanPath == routeOverview:
+	split := strings.Split(path.Clean(r.URL.Path), "/")
+	route := "/"
+	if len(split) > 1 {
+		route = split[1]
+	}
+
+	switch route {
+	case routeOverview:
 		return h.overview(ctx, w, r)
-	case cleanPath == routeFeeds:
+	case routeFeeds:
 		return h.feeds(ctx, w, r)
-	case base == routeAdd+h.AddSuffix:
+	case routeAdd + h.AddSuffix:
 		return h.addFeed(ctx, w, r)
 	default:
 		return httpwrap.Error{
@@ -83,13 +87,4 @@ func formatHost(uri string) string {
 		return ""
 	}
 	return parsed.Host
-}
-
-func splitURL(url string) (string, string) {
-	split := strings.SplitN(url[1:], "/", 2)
-	split[0] = "/" + split[0]
-	if len(split) == 1 {
-		return split[0], "/"
-	}
-	return split[0], "/" + split[1]
 }
