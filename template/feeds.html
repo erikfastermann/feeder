@@ -1,3 +1,4 @@
 {{ range . }}
-<p><b><a href="{{ .Link }}">{{ .Title }}</b></a></p>
+<p><b><a href="{{ .Link }}">{{ .Title }}</b></a><br>
+Last checked: {{ .LastChecked }}; Last updated: {{ .LastUpdated }}</p>
 {{ end }}
