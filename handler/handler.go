@@ -20,6 +20,7 @@ import (
 
 const (
 	routeOverview = "/"
+	routeFeeds    = "/feeds"
 	routeUpdate   = "/update"
 	routeAdd      = "/add"
 )
@@ -67,6 +68,8 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		return h.overview(ctx, w, r)
 	case cleanPath == routeUpdate:
 		return h.updateFeeds(ctx, w, r)
+	case cleanPath == routeFeeds:
+		return h.feeds(ctx, w, r)
 	case base == routeAdd+h.AddSuffix:
 		return h.addFeed(ctx, w, r)
 	default:
