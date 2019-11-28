@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,7 +29,7 @@ func (h *Handler) updateAllFeedItems() {
 	}
 
 	for _, feed := range feeds {
-		h.updateFeedItems(feed.ID, feed.FeedLink)
+		h.updateFeedItems(feed.ID, feed.FeedURL)
 	}
 }
 
@@ -76,13 +77,9 @@ func (h *Handler) getFeed(url string) (*gofeed.Feed, error) {
 
 func parseFeed(feed *gofeed.Feed, feedLink string) db.Feed {
 	return db.Feed{
-		Author:      checkAuthor(feed.Author, ""),
-		Title:       feed.Title,
-		Language:    feed.Language,
-		Description: feed.Description,
-		Link:        feed.Link,
-		FeedLink:    feedLink,
-		LastUpdated: db.NullTime{
+		URL:     feed.Link,
+		FeedURL: feedLink,
+		LastUpdated: sql.NullTime{
 			Valid: true,
 			Time:  time.Now(),
 		},
@@ -92,7 +89,6 @@ func (h *Handler) parseItems(feed *gofeed.Feed, feedID int64) ([]db.Item, error)
 	if len(feed.Items) == 0 {
 		return nil, nil
 	}
-	feedAuthor := checkAuthor(feed.Author, "")
 	items := make([]db.Item, 0)
 	for _, item := range feed.Items {
 		if item.UpdatedParsed == nil && item.PublishedParsed == nil {
@@ -107,21 +103,11 @@ func (h *Handler) parseItems(feed *gofeed.Feed, feedID int64) ([]db.Item, error)
 		}
 
 		items = append(items, db.Item{
-			FeedID:      feedID,
-			Author:      checkAuthor(item.Author, feedAuthor),
-			Title:       item.Title,
-			Description: item.Description,
-			Content:     item.Content,
-			Link:        item.Link,
-			Added:       t,
+			FeedID: feedID,
+			Title:  item.Title,
+			URL:    item.Link,
+			Added:  t,
 		})
 	}
 	return items, nil
-}
-
-func checkAuthor(author *gofeed.Person, name string) string {
-	if author != nil && author.Name != "" {
-		return author.Name
-	}
-	return name
 }
