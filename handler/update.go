@@ -11,12 +11,6 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func (h *Handler) updateFeeds(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	go h.updateAllFeedItems()
-	http.Redirect(w, r, routeOverview, http.StatusTemporaryRedirect)
-	return nil
-}
-
 func (h *Handler) updateAllFeedItems() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	feeds, err := h.DB.AllFeeds(ctx)
