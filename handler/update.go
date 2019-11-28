@@ -2,91 +2,52 @@ package handler
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/erikfastermann/feeder/db"
-	"github.com/mmcdole/gofeed"
 )
 
-func (h *Handler) updateAllFeedItems() {
+func (h *Handler) update() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	feeds, err := h.DB.AllFeeds(ctx)
 	cancel()
 	if err != nil {
 		h.Logger.Print(err)
-		if feeds == nil {
-			return
-		}
 	}
 
 	for _, feed := range feeds {
-		h.updateFeedItems(feed.ID, feed.FeedURL)
+		items, err := h.getItems(feed.FeedURL)
+		if err != nil {
+			h.Logger.Printf("failed parsing feed %s, %v", feed.FeedURL, err)
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err := h.DB.AddItems(ctx, feed.ID, items)
+		cancel()
+		if err != nil {
+			h.Logger.Printf("failed updating db %v", err)
+		}
 	}
 }
 
-func (h *Handler) updateFeedItems(feedID int64, feedLink string) {
-	added, err := h.doUpdateFeedItems(feedID, feedLink)
-	for _, item := range added {
-		h.Logger.Printf("feed %s (%d): added %s (%s), ID: %d",
-			feedLink,
-			feedID,
-			strconv.Quote(item.Title),
-			item.Added,
-			item.ID,
-		)
-	}
-	if err != nil {
-		h.Logger.Printf("failed parsing feed %s, %v", feedLink, err)
-	}
-}
-
-func (h *Handler) doUpdateFeedItems(feedID int64, feedLink string) ([]db.Item, error) {
-	feed, err := h.getFeed(feedLink)
-	if err != nil {
-		return nil, err
-	}
-
-	items, err := h.parseItems(feed, feedID)
-	if err != nil {
-		return nil, err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	return h.DB.AddItems(ctx, items)
-}
-
-func (h *Handler) getFeed(url string) (*gofeed.Feed, error) {
+func (h *Handler) getItems(feedURL string) ([]db.Item, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
-	res, err := client.Get(url)
+	res, err := client.Get(feedURL)
 	if err != nil {
 		return nil, err
 	}
 	feed, err := h.parser.Parse(res.Body)
 	res.Body.Close()
-	return feed, err
-}
+	if err != nil {
+		return nil, err
+	}
 
-func parseFeed(feed *gofeed.Feed, feedLink string) db.Feed {
-	return db.Feed{
-		URL:     feed.Link,
-		FeedURL: feedLink,
-		LastUpdated: sql.NullTime{
-			Valid: true,
-			Time:  time.Now(),
-		},
-	}
-}
-func (h *Handler) parseItems(feed *gofeed.Feed, feedID int64) ([]db.Item, error) {
-	if len(feed.Items) == 0 {
-		return nil, nil
-	}
 	items := make([]db.Item, 0)
 	for _, item := range feed.Items {
 		if item.UpdatedParsed == nil && item.PublishedParsed == nil {
-			h.Logger.Printf("item %s has an invalid time", item.Title)
+			h.Logger.Printf("item %s has an invalid time", item.Title) // TODO: How to handle this error?
 			continue
 		}
 		var t time.Time
@@ -97,7 +58,8 @@ func (h *Handler) parseItems(feed *gofeed.Feed, feedID int64) ([]db.Item, error)
 		}
 
 		items = append(items, db.Item{
-			FeedID: feedID,
+			ID:     -1,
+			FeedID: -1,
 			Title:  item.Title,
 			URL:    item.Link,
 			Added:  t,

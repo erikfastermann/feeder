@@ -10,18 +10,21 @@ import (
 
 func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	feedURL := r.FormValue("url")
-	feed, err := h.getFeed(feedURL)
+	items, err := h.getItems(feedURL)
 	if err != nil {
 		return httpwrap.Error{
 			StatusCode: http.StatusBadRequest,
 			Err:        fmt.Errorf("add: failed parsing feed %s, %v", feedURL, err),
 		}
 	}
-	id, err := h.DB.AddFeed(ctx, parseFeed(feed, feedURL))
+
+	id, err := h.DB.AddFeed(ctx, url, feedURL)
 	if err != nil {
-		return fmt.Errorf("add: failed storing feed %s, %v", feedURL, err)
+		return err
 	}
-	go h.updateFeedItems(id, feedURL)
+	if err := h.DB.AddItems(ctx, id, items); err != nil {
+		return err
+	}
 
 	http.Redirect(w, r, routeOverview, http.StatusTemporaryRedirect)
 	return nil

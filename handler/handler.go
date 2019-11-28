@@ -46,9 +46,9 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 
 		h.parser = gofeed.NewParser()
 		go func() {
-			h.updateAllFeedItems()
+			h.update()
 			for range time.Tick(5 * time.Minute) {
-				h.updateAllFeedItems()
+				h.update()
 			}
 		}()
 	})
