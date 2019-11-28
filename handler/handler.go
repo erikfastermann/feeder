@@ -14,7 +14,6 @@ import (
 
 	"github.com/erikfastermann/feeder/db"
 	"github.com/erikfastermann/httpwrap"
-	"github.com/mmcdole/gofeed"
 )
 
 const (
@@ -26,7 +25,6 @@ const (
 type Handler struct {
 	once         sync.Once
 	Logger       *log.Logger
-	parser       *gofeed.Parser
 	TemplateGlob string
 	AddSuffix    string
 	tmplts       *template.Template
@@ -44,7 +42,6 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 			h.AddSuffix = "-" + h.AddSuffix
 		}
 
-		h.parser = gofeed.NewParser()
 		go func() {
 			h.update()
 			for range time.Tick(5 * time.Minute) {

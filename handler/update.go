@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/erikfastermann/feeder/db"
+	"github.com/mmcdole/gofeed"
 )
 
 func (h *Handler) update() {
@@ -39,7 +40,8 @@ func (h *Handler) getItems(feedURL string) ([]db.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	feed, err := h.parser.Parse(res.Body)
+	parser := gofeed.NewParser()
+	feed, err := parser.Parse(res.Body)
 	res.Body.Close()
 	if err != nil {
 		return nil, err
