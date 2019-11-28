@@ -24,7 +24,7 @@ func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	id, err := h.DB.AddFeed(ctx, url.Host, feedURL)
+	id, err := h.DB.AddFeed(ctx, url.Scheme+"://"+url.Host, feedURL)
 	if err != nil {
 		return err
 	}
