@@ -23,14 +23,10 @@ func Open(ctx context.Context, path string) (*DB, error) {
 	}
 
 	_, err = sqlDB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS feeds (
-		feed_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-		title VARCHAR(32) NOT NULL,
-		author VARCHAR(32) NOT NULL,
-		language VARCHAR(16) NOT NULL,
-		description TEXT NOT NULL,
-		link VARCHAR(63) NOT NULL,
-		feed_link VARCHAR(63) NOT NULL,
-		image_url VARCHAR(63) NOT NULL,
+		id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+		url TEXT NOT NULL,
+		feed_url TEXT NOT NULL,
+		last_checked DATETIME
 		last_updated DATETIME
 	)`)
 	if err != nil {
@@ -38,15 +34,12 @@ func Open(ctx context.Context, path string) (*DB, error) {
 	}
 
 	_, err = sqlDB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS items (
-		author VARCHAR(32) NOT NULL,
-		title VARCHAR(32) NOT NULL,
-		description TEXT NOT NULL,
-		content TEXT NOT NULL,
-		link VARCHAR(63) NOT NULL,
-		image_url VARCHAR(63) NOT NULL,
+		id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+		feed_id INTEGER NOT NULL,
+		title TEXT NOT NULL,
+		url TEXT NOT NULL,
 		added DATETIME NOT NULL,
-		feed INTEGER NOT NULL,
-		FOREIGN KEY(feed) REFERENCES feeds(feed_id)
+		FOREIGN KEY(feed_id) REFERENCES feeds(id)
 	)`)
 	if err != nil {
 		return nil, err
