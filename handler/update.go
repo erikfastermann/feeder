@@ -24,7 +24,7 @@ func (h *Handler) update() {
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err := h.DB.AddItems(ctx, feed.ID, items)
+		err = h.DB.AddItems(ctx, feed.ID, items)
 		cancel()
 		if err != nil {
 			h.Logger.Printf("failed updating db %v", err)

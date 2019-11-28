@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/erikfastermann/httpwrap"
 )
 
 func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	feedURL := r.FormValue("url")
+
 	items, err := h.getItems(feedURL)
 	if err != nil {
 		return httpwrap.Error{
@@ -18,7 +20,11 @@ func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	id, err := h.DB.AddFeed(ctx, url, feedURL)
+	url, err := url.Parse(feedURL)
+	if err != nil {
+		return err
+	}
+	id, err := h.DB.AddFeed(ctx, url.Host, feedURL)
 	if err != nil {
 		return err
 	}
