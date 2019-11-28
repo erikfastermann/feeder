@@ -93,14 +93,14 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.Item, err
 	return items, rows.Err()
 }
 
-func (sqlDB *DB) AddFeed(ctx context.Context, feed db.Feed) (int64, error) {
+func (sqlDB *DB) AddFeed(ctx context.Context, url, feedURL string) (int64, error) {
 	id := int64(-1)
 	err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		var count int
 		err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
 			FROM feeds
 			WHERE feed_url=?`,
-			feed.URL).Scan(&count)
+			feedURL).Scan(&count)
 		if err != nil {
 			return err
 		}
@@ -111,7 +111,7 @@ func (sqlDB *DB) AddFeed(ctx context.Context, feed db.Feed) (int64, error) {
 		res, err := sqlDB.ExecContext(ctx, `INSERT INTO
 			feeds(url, feed_url, last_checked, last_updated)
 			VALUES(?, ?, ?, ?)`,
-			feed.URL, feed.FeedURL, feed.LastChecked, feed.LastUpdated)
+			url, feedURL, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -124,11 +124,9 @@ func (sqlDB *DB) AddFeed(ctx context.Context, feed db.Feed) (int64, error) {
 	return id, nil
 }
 
-func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, error) {
-	addedItems := make([]db.Item, 0)
-
-	for _, item := range items {
-		err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
+func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) error {
+	err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
+		for _, item := range items {
 			var count int
 			err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
 				FROM items
@@ -138,13 +136,13 @@ func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, erro
 				return err
 			}
 			if count > 0 {
-				return nil
+				continue
 			}
 
 			res, err := sqlDB.ExecContext(ctx, `INSERT INTO
 				items(feed_id, title, url, added)
 				VALUES(?, ?, ?, ?)`,
-				item.FeedID, item.Title, item.URL, item.Added)
+				feedID, item.Title, item.URL, item.Added)
 			if err != nil {
 				return err
 			}
@@ -152,14 +150,10 @@ func (sqlDB *DB) AddItems(ctx context.Context, items []db.Item) ([]db.Item, erro
 			if err != nil {
 				return err
 			}
-			addedItems = append(addedItems, item)
-			return nil
-		})
-		if err != nil {
-			return addedItems, err
 		}
-	}
-	return addedItems, nil
+		return nil
+	})
+	return err
 }
 
 func (sqlDB *DB) asTx(ctx context.Context, fn func(tx *sql.Tx) error) error {

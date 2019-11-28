@@ -9,8 +9,8 @@ import (
 type DB interface {
 	Close() error
 
-	AddFeed(ctx context.Context, feed Feed) (feedID int64, err error)
-	AddItems(ctx context.Context, items []Item) (addedItems []Item, err error)
+	AddFeed(ctx context.Context, url, feedURL string) (feedID int64, err error)
+	AddItems(ctx context.Context, feedID int64, items []Item) (err error)
 
 	AllFeeds(ctx context.Context) ([]Feed, error)
 	Newest(ctx context.Context, offset, limit uint) ([]Item, error)
