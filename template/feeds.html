@@ -1,4 +1,5 @@
 {{ range . }}
 <p><b>{{ .Host }}</b><br>
-Last checked: {{ .LastChecked }}; Last updated: {{ .LastUpdated }}</p>
+Last checked: {{ if .LastChecked.Valid }}{{ .LastChecked.Time }}{{ else }}Never{{ end }}<br>
+Last updated: {{ if .LastUpdated.Valid }}{{ .LastUpdated.Time }}{{ else }}Never{{ end }}</p>
 {{ end }}
