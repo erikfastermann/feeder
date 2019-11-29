@@ -21,10 +21,10 @@ func main() {
 }
 
 func run() error {
-	if len(os.Args) != 4 {
-		return fmt.Errorf("USAGE: %s ADDRESS TEMPLATE_GLOB DB_PATH", os.Args[0])
+	if len(os.Args) != 6 {
+		return fmt.Errorf("USAGE: %s ADDRESS CERT_FILE KEY_FILE TEMPLATE_GLOB DB_PATH", os.Args[0])
 	}
-	addr, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3]
+	addr, certFile, keyFile, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4], os.Args[5]
 	username := os.Getenv("FEEDER_USERNAME")
 	if username == "" {
 		return fmt.Errorf("environment variable FEEDER_USERNAME empty or unset")
@@ -50,5 +50,5 @@ func run() error {
 		TemplateGlob: tmpltGlob,
 		DB:           sqlDB,
 	}
-	return http.ListenAndServe(addr, httpwrap.LogCustom(httpwrap.HandleError(h), l))
+	return http.ListenAndServeTLS(addr, certFile, keyFile, httpwrap.LogCustom(httpwrap.HandleError(h), l))
 }
