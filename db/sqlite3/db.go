@@ -51,7 +51,8 @@ func Open(ctx context.Context, path string) (*DB, error) {
 
 func (sqlDB *DB) AllFeeds(ctx context.Context) ([]db.Feed, error) {
 	rows, err := sqlDB.QueryContext(ctx, `SELECT id, host, feed_url, last_checked, last_updated
-		FROM feeds`)
+		FROM feeds
+		ORDER BY last_updated DESC`)
 	if err != nil {
 		return nil, err
 	}
