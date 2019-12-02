@@ -1,8 +1,15 @@
 {{ range . }}
-<p><b><a href="{{ .Host }}">{{ .Host }}</a></b> <a href="/remove?id={{ .ID }}">❌</a><br>
-<a href="{{ .FeedURL }}">{{ .FeedURL }}</a><br>
-Last checked: {{ if .LastChecked.Valid }}{{ .LastChecked.Time }}{{ else }}Never{{ end }}<br>
-Last updated: {{ if .LastUpdated.Valid }}{{ .LastUpdated.Time }}{{ else }}Never{{ end }}</p>
+<p>
+	<b><a href="{{ .Host }}">{{ .Host }}</a></b>
+	<button onclick="edit({{ .ID }}, {{ .Host }})">Edit</button>
+	<a href="/remove?id={{ .ID }}">Remove</a>
+	<br>
+	<a href="{{ .FeedURL }}">{{ .FeedURL }}</a>
+	<br>
+	Last checked: {{ if .LastChecked.Valid }}{{ .LastChecked.Time }}{{ else }}Never{{ end }}
+	<br>
+	Last updated: {{ if .LastUpdated.Valid }}{{ .LastUpdated.Time }}{{ else }}Never{{ end }}
+</p>
 {{ end }}
 <hr>
 <p><a href="/">overview</a></p>
@@ -10,3 +17,12 @@ Last updated: {{ if .LastUpdated.Valid }}{{ .LastUpdated.Time }}{{ else }}Never{
 	<input type="text" name="url">
 	<button type="submit">Add feed</button>
 </form>
+
+<script>
+function edit(id, host) {
+	const newHost = prompt('Set new host for: \"' + host + '"');
+	if (!(newHost == null || newHost == "")) {
+		window.location.href = "/edit?id=" + id + "&host=" + newHost;
+	};
+}
+</script>
