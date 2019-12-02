@@ -1,3 +1,5 @@
 {{ range . }}
 <p><b><a href="{{ if (eq (index .URL 0) '/')}}{{ .Host }}{{ end }}{{ .URL }}">{{ .Title }}</b></a> (<a href="{{ .Host }}">{{ .Host }}</a>)<br>{{ .Added }}</p>
 {{ end }}
+<hr>
+<p><a href="/feeds">feeds</a></p>
