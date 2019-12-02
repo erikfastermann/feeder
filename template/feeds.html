@@ -5,3 +5,7 @@ Last updated: {{ if .LastUpdated.Valid }}{{ .LastUpdated.Time }}{{ else }}Never{
 {{ end }}
 <hr>
 <p><a href="/">overview</a></p>
+<form action="/add">
+	<input type="text" name="url">
+	<button type="submit">Add feed</button>
+</form>
