@@ -88,8 +88,10 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.ItemWithH
 	}
 	defer rows.Close()
 
+	gotRows := false
 	items := make([]db.ItemWithHost, 0)
 	for rows.Next() {
+		gotRows = true
 		var item db.ItemWithHost
 		err := rows.Scan(&item.ID, &item.FeedID, &item.Title, &item.URL, &item.Added, &item.Host)
 		if err != nil {
@@ -98,7 +100,13 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.ItemWithH
 		items = append(items, item)
 	}
 
-	return items, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if !gotRows {
+		return nil, sql.ErrNoRows
+	}
+	return items, nil
 }
 
 func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int, error) {

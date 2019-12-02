@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,14 +25,30 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		}
 	}
 
+	type data struct {
+		Prev  int
+		Next  int
+		Items []db.ItemWithHost
+	}
+
 	count, err := h.DB.ItemCount(ctx)
 	if err != nil {
 		return err
 	}
+	if count == 0 && page == 0 {
+		return h.tmplts.ExecuteTemplate(w, "overview.html", data{Prev: -1, Next: -1})
+	}
+
 	const itemsPerPage = 30
 	offset := page * itemsPerPage
 	items, err := h.DB.Newest(ctx, offset, itemsPerPage)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return httpwrap.Error{
+				StatusCode: http.StatusBadRequest,
+				Err:        fmt.Errorf("overview: invalid page %d", page),
+			}
+		}
 		return err
 	}
 
@@ -40,11 +57,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		next = -1
 	}
 
-	return h.tmplts.ExecuteTemplate(w, "overview.html", struct {
-		Prev  int
-		Next  int
-		Items []db.ItemWithHost
-	}{
+	return h.tmplts.ExecuteTemplate(w, "overview.html", data{
 		Prev:  int(page) - 1,
 		Next:  next,
 		Items: items,
