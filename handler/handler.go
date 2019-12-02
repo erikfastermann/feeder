@@ -21,6 +21,7 @@ const (
 	routeOverview = "/"
 	routeFeeds    = "/feeds"
 	routeAdd      = "/add"
+	routeRemove   = "/remove"
 )
 
 type Handler struct {
@@ -74,6 +75,8 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		return h.feeds(ctx, w, r)
 	case routeAdd:
 		return h.addFeed(ctx, w, r)
+	case routeRemove:
+		return h.remove(ctx, w, r)
 	default:
 		return httpwrap.Error{
 			StatusCode: http.StatusNotFound,
