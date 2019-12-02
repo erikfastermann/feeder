@@ -1,5 +1,5 @@
 {{ range . }}
-<p><b><a href="{{ .Host }}">{{ .Host }}</a></b><br>
+<p><b><a href="{{ .Host }}">{{ .Host }}</a></b> <a href="/remove?id={{ .ID }}">❌</a><br>
 Last checked: {{ if .LastChecked.Valid }}{{ .LastChecked.Time }}{{ else }}Never{{ end }}<br>
 Last updated: {{ if .LastUpdated.Valid }}{{ .LastUpdated.Time }}{{ else }}Never{{ end }}</p>
 {{ end }}
