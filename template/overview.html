@@ -1,4 +1,5 @@
-{{ range . }}
+<p>{{ if (ge .Prev 0) }}<a href="/?page={{ .Prev }}">&lt;</a>{{ end }} {{ if (gt .Next 0) }}<a href="/?page={{ .Next }}">&gt;</a>{{ end }}</p>
+{{ range .Items }}
 <p><b><a href="{{ if (eq (index .URL 0) '/')}}{{ .Host }}{{ end }}{{ .URL }}">{{ .Title }}</b></a> (<a href="{{ .Host }}">{{ .Host }}</a>)<br>{{ .Added }}</p>
 {{ end }}
 <hr>
