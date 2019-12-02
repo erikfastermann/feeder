@@ -129,25 +129,27 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 }
 
 func (sqlDB *DB) RemoveFeed(ctx context.Context, id int64) error {
-	res, err := sqlDB.ExecContext(ctx, `DELETE FROM feeds
-		WHERE id=?`, id)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	switch rows {
-	case 0:
-		return sql.ErrNoRows
-	case 1:
-		_, err := sqlDB.ExecContext(ctx, `DELETE FROM items
-		WHERE feed_id=?`, id)
-		return err
-	default:
-		return errors.New("more than 1 row would be affected in a query")
-	}
+	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
+		res, err := tx.ExecContext(ctx, `DELETE FROM feeds
+			WHERE id=?`, id)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		switch rows {
+		case 0:
+			return sql.ErrNoRows
+		case 1:
+			_, err := tx.ExecContext(ctx, `DELETE FROM items
+				WHERE feed_id=?`, id)
+			return err
+		default:
+			return errors.New("more than 1 row would be affected in a query")
+		}
+	})
 }
 
 func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) error {
