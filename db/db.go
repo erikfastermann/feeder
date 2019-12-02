@@ -12,6 +12,7 @@ type DB interface {
 	RemoveFeed(ctx context.Context, id int) error
 
 	Newest(ctx context.Context, offset, limit uint) ([]ItemWithHost, error)
+	ItemCount(ctx context.Context) (count int, err error)
 	AddItems(ctx context.Context, feedID int, items []Item) error
 
 	Close() error

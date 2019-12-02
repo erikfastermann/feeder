@@ -214,6 +214,16 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int, items []db.Item) erro
 	})
 }
 
+func (sqlDB *DB) ItemCount(ctx context.Context) (int, error) {
+	var count int
+	err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
+		FROM items`).Scan(&count)
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
+}
+
 func (sqlDB *DB) asTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := sqlDB.BeginTx(ctx, nil)
 	if err != nil {
