@@ -31,7 +31,7 @@ type Handler struct {
 	Username, Password string
 	TemplateGlob       string
 	tmplts             *template.Template
-	DB                 db.DB
+	DB                 *db.DB
 }
 
 func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error {

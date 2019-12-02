@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/erikfastermann/feeder/db/sqlite3"
+	"github.com/erikfastermann/feeder/db"
 	"github.com/erikfastermann/feeder/handler"
 	"github.com/erikfastermann/httpwrap"
 )
@@ -35,7 +35,7 @@ func run() error {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	sqlDB, err := sqlite3.Open(ctx, dbPath)
+	sqlDB, err := db.Open(ctx, dbPath)
 	cancel()
 	if err != nil {
 		return err
