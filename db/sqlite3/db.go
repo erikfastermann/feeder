@@ -147,6 +147,29 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int, error)
 	return id, nil
 }
 
+func (sqlDB *DB) EditFeedHost(ctx context.Context, id int, newHost string) error {
+	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
+		res, err := tx.ExecContext(ctx, `UPDATE feeds
+			SET host=?
+			WHERE id=?`, newHost, id)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		switch rows {
+		case 0:
+			return sql.ErrNoRows
+		case 1:
+			return nil
+		default:
+			return errors.New("more than 1 row would be affected in a query")
+		}
+	})
+}
+
 func (sqlDB *DB) RemoveFeed(ctx context.Context, id int) error {
 	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		res, err := tx.ExecContext(ctx, `DELETE FROM feeds

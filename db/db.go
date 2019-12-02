@@ -9,6 +9,7 @@ import (
 type DB interface {
 	AllFeeds(ctx context.Context) ([]Feed, error)
 	AddFeed(ctx context.Context, host, feedURL string) (feedID int, err error)
+	EditFeedHost(ctx context.Context, id int, newHost string) error
 	RemoveFeed(ctx context.Context, id int) error
 
 	Newest(ctx context.Context, offset, limit uint) ([]ItemWithHost, error)
