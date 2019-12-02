@@ -32,6 +32,6 @@ func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	http.Redirect(w, r, routeOverview, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, routeFeeds, http.StatusTemporaryRedirect)
 	return nil
 }
