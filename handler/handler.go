@@ -87,3 +87,10 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		}
 	}
 }
+
+func badRequestf(format string, a ...interface{}) error {
+	return httpwrap.Error{
+		StatusCode: http.StatusBadRequest,
+		Err:        fmt.Errorf(format, a...),
+	}
+}

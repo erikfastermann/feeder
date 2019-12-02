@@ -3,12 +3,10 @@ package handler
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/erikfastermann/feeder/db"
-	"github.com/erikfastermann/httpwrap"
 )
 
 func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -18,10 +16,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		page = uint(page64)
 		const uintMax = ^uint(0)
 		if err != nil || page > uintMax/30 {
-			return httpwrap.Error{
-				StatusCode: http.StatusBadRequest,
-				Err:        fmt.Errorf("overview: ivalid page %s", strconv.Quote(pageStr)),
-			}
+			return badRequestf("overview: ivalid page %s", strconv.Quote(pageStr))
 		}
 	}
 
@@ -44,10 +39,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 	items, err := h.DB.Newest(ctx, offset, itemsPerPage)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return httpwrap.Error{
-				StatusCode: http.StatusBadRequest,
-				Err:        fmt.Errorf("overview: invalid page %d", page),
-			}
+			return badRequestf("overview: invalid page %d", page)
 		}
 		return err
 	}

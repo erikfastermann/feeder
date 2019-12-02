@@ -2,11 +2,8 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
-
-	"github.com/erikfastermann/httpwrap"
 )
 
 func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -14,10 +11,7 @@ func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	items, err := h.getItems(feedURL)
 	if err != nil {
-		return httpwrap.Error{
-			StatusCode: http.StatusBadRequest,
-			Err:        fmt.Errorf("add: failed parsing feed %s, %v", feedURL, err),
-		}
+		return badRequestf("add: failed parsing feed %s, %v", feedURL, err)
 	}
 
 	url, err := url.Parse(feedURL)
