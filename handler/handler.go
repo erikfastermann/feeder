@@ -22,6 +22,7 @@ const (
 	routeFeeds    = "/feeds"
 	routeAdd      = "/add"
 	routeRemove   = "/remove"
+	routeEdit     = "/edit"
 )
 
 type Handler struct {
@@ -75,6 +76,8 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		return h.feeds(ctx, w, r)
 	case routeAdd:
 		return h.addFeed(ctx, w, r)
+	case routeEdit:
+		return h.edit(ctx, w, r)
 	case routeRemove:
 		return h.remove(ctx, w, r)
 	default:
