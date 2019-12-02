@@ -4,11 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/erikfastermann/feeder/db"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+const intMax = 1<<(strconv.IntSize-1) - 1
 
 type DB struct {
 	*sql.DB
@@ -97,8 +101,8 @@ func (sqlDB *DB) Newest(ctx context.Context, offset, limit uint) ([]db.ItemWithH
 	return items, rows.Err()
 }
 
-func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, error) {
-	id := int64(-1)
+func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int, error) {
+	var id int
 	err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		var count int
 		err := tx.QueryRowContext(ctx, `SELECT COUNT(*)
@@ -119,8 +123,15 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 		if err != nil {
 			return err
 		}
-		id, err = res.LastInsertId()
-		return err
+		id64, err := res.LastInsertId()
+		if err != nil {
+			return err
+		}
+		if id64 > intMax {
+			return fmt.Errorf("feed id %d is too large", id64)
+		}
+		id = int(id64)
+		return nil
 	})
 	if err != nil {
 		return -1, err
@@ -128,7 +139,7 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 	return id, nil
 }
 
-func (sqlDB *DB) RemoveFeed(ctx context.Context, id int64) error {
+func (sqlDB *DB) RemoveFeed(ctx context.Context, id int) error {
 	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		res, err := tx.ExecContext(ctx, `DELETE FROM feeds
 			WHERE id=?`, id)
@@ -152,7 +163,7 @@ func (sqlDB *DB) RemoveFeed(ctx context.Context, id int64) error {
 	})
 }
 
-func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) error {
+func (sqlDB *DB) AddItems(ctx context.Context, feedID int, items []db.Item) error {
 	didUpdate := false
 	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		for _, item := range items {
@@ -168,12 +179,19 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) er
 				continue
 			}
 
-			_, err = tx.ExecContext(ctx, `INSERT INTO
+			res, err := tx.ExecContext(ctx, `INSERT INTO
 				items(feed_id, title, url, added)
 				VALUES(?, ?, ?, ?)`,
 				feedID, item.Title, item.URL, item.Added)
 			if err != nil {
 				return err
+			}
+			id, err := res.LastInsertId()
+			if err != nil {
+				return err
+			}
+			if id > intMax {
+				return fmt.Errorf("item id %d is too large", id)
 			}
 			didUpdate = true
 		}

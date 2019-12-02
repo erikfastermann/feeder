@@ -7,18 +7,18 @@ import (
 )
 
 type DB interface {
-	Close() error
-
 	AllFeeds(ctx context.Context) ([]Feed, error)
-	AddFeed(ctx context.Context, host, feedURL string) (feedID int64, err error)
-	RemoveFeed(ctx context.Context, id int64) error
+	AddFeed(ctx context.Context, host, feedURL string) (feedID int, err error)
+	RemoveFeed(ctx context.Context, id int) error
 
-	AddItems(ctx context.Context, feedID int64, items []Item) (err error)
 	Newest(ctx context.Context, offset, limit uint) ([]ItemWithHost, error)
+	AddItems(ctx context.Context, feedID int, items []Item) error
+
+	Close() error
 }
 
 type Feed struct {
-	ID          int64
+	ID          int
 	Host        string
 	FeedURL     string
 	LastChecked sql.NullTime
@@ -26,8 +26,8 @@ type Feed struct {
 }
 
 type Item struct {
-	ID     int64
-	FeedID int64
+	ID     int
+	FeedID int
 	Title  string
 	URL    string
 	Added  time.Time

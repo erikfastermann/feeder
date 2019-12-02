@@ -12,11 +12,11 @@ import (
 
 func (h *Handler) remove(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	idStr := r.FormValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		return httpwrap.Error{
 			StatusCode: http.StatusBadRequest,
-			Err:        fmt.Errorf("%s is an invalid id", strconv.Quote(idStr)),
+			Err:        fmt.Errorf("%s is an invalid id, %v", strconv.Quote(idStr), err),
 		}
 	}
 
