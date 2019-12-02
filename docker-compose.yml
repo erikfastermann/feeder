@@ -3,11 +3,15 @@ services:
         webapp:
                 build:
                         context: .
+                environment:
+                        FEEDER_USERNAME: 'UNSAFE'
+                        FEEDER_PASSWORD: 'UNSAFE'
                 container_name: feeder
                 ports:
-                        - "80:80"
+                        - "443:443"
                 restart: on-failure
                 volumes:
                         - feeder:/var/feeder
+                        # - /etc/letsencrypt:/var/feeder-keypairs
 volumes:
         feeder:
