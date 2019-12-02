@@ -101,7 +101,7 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 	id := int64(-1)
 	err := sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		var count int
-		err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
+		err := tx.QueryRowContext(ctx, `SELECT COUNT(*)
 			FROM feeds
 			WHERE feed_url=?`,
 			feedURL).Scan(&count)
@@ -112,7 +112,7 @@ func (sqlDB *DB) AddFeed(ctx context.Context, host, feedURL string) (int64, erro
 			return nil
 		}
 
-		res, err := sqlDB.ExecContext(ctx, `INSERT INTO
+		res, err := tx.ExecContext(ctx, `INSERT INTO
 			feeds(host, feed_url)
 			VALUES(?, ?)`,
 			host, feedURL, nil, nil)
@@ -157,7 +157,7 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) er
 	return sqlDB.asTx(ctx, func(tx *sql.Tx) error {
 		for _, item := range items {
 			var count int
-			err := sqlDB.QueryRowContext(ctx, `SELECT COUNT(*)
+			err := tx.QueryRowContext(ctx, `SELECT COUNT(*)
 				FROM items
 				WHERE title=? AND added=?`,
 				item.Title, item.Added).Scan(&count)
@@ -168,7 +168,7 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) er
 				continue
 			}
 
-			_, err = sqlDB.ExecContext(ctx, `INSERT INTO
+			_, err = tx.ExecContext(ctx, `INSERT INTO
 				items(feed_id, title, url, added)
 				VALUES(?, ?, ?, ?)`,
 				feedID, item.Title, item.URL, item.Added)
@@ -180,7 +180,7 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) er
 
 		now := time.Now()
 		if didUpdate {
-			_, err := sqlDB.ExecContext(ctx, `UPDATE feeds
+			_, err := tx.ExecContext(ctx, `UPDATE feeds
 				SET last_updated=?
 				WHERE id=?`,
 				now, feedID)
@@ -188,7 +188,7 @@ func (sqlDB *DB) AddItems(ctx context.Context, feedID int64, items []db.Item) er
 				return err
 			}
 		}
-		_, err := sqlDB.ExecContext(ctx, `UPDATE feeds
+		_, err := tx.ExecContext(ctx, `UPDATE feeds
 			SET last_checked=?
 			WHERE id=?`,
 			now, feedID)
