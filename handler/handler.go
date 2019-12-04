@@ -94,3 +94,7 @@ func badRequestf(format string, a ...interface{}) error {
 		Err:        fmt.Errorf(format, a...),
 	}
 }
+
+func contentTypeHTML(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+}

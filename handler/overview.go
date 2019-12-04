@@ -31,6 +31,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		return err
 	}
 	if count == 0 && page == 0 {
+		contentTypeHTML(w)
 		return h.tmplts.ExecuteTemplate(w, "overview.html", data{Prev: -1, Next: -1})
 	}
 
@@ -49,6 +50,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		next = -1
 	}
 
+	contentTypeHTML(w)
 	return h.tmplts.ExecuteTemplate(w, "overview.html", data{
 		Prev:  int(page) - 1,
 		Next:  next,

@@ -10,5 +10,6 @@ func (h *Handler) feeds(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return err
 	}
+	contentTypeHTML(w)
 	return h.tmplts.ExecuteTemplate(w, "feeds.html", items)
 }
