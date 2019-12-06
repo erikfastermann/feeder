@@ -2,12 +2,9 @@ package handler
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/erikfastermann/feeder/db"
-	"github.com/mmcdole/gofeed"
+	"github.com/erikfastermann/feeder/parser"
 )
 
 func (h *Handler) update() {
@@ -19,7 +16,7 @@ func (h *Handler) update() {
 	}
 
 	for _, feed := range feeds {
-		items, err := h.getItems(feed.FeedURL)
+		items, err := parser.Items(feed.FeedURL)
 		if err != nil {
 			h.Logger.Printf("failed parsing feed %s, %v", feed.FeedURL, err)
 			continue
@@ -32,40 +29,4 @@ func (h *Handler) update() {
 			h.Logger.Printf("failed updating db %v", err)
 		}
 	}
-}
-
-func (h *Handler) getItems(feedURL string) ([]db.Item, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
-	res, err := client.Get(feedURL)
-	if err != nil {
-		return nil, err
-	}
-	parser := gofeed.NewParser()
-	feed, err := parser.Parse(res.Body)
-	res.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	items := make([]db.Item, 0)
-	for _, item := range feed.Items {
-		if item.UpdatedParsed == nil && item.PublishedParsed == nil {
-			return nil, fmt.Errorf("item %s has an invalid time", item.Title)
-		}
-		var t time.Time
-		if item.PublishedParsed != nil {
-			t = *item.PublishedParsed
-		} else {
-			t = *item.UpdatedParsed
-		}
-
-		items = append(items, db.Item{
-			ID:     -1,
-			FeedID: -1,
-			Title:  item.Title,
-			URL:    item.Link,
-			Added:  t,
-		})
-	}
-	return items, nil
 }

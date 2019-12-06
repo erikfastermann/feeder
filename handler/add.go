@@ -4,12 +4,14 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+
+	"github.com/erikfastermann/feeder/parser"
 )
 
 func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	feedURL := r.FormValue("url")
 
-	items, err := h.getItems(feedURL)
+	items, err := parser.Items(feedURL)
 	if err != nil {
 		return badRequestf("add: failed parsing feed %s, %v", feedURL, err)
 	}
