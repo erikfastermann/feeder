@@ -16,7 +16,7 @@ func (h *Handler) update() {
 	}
 
 	for _, feed := range feeds {
-		items, err := parser.Items(feed.FeedURL)
+		items, err := parser.Parse(feed.FeedURL)
 		if err != nil {
 			h.Logger.Printf("failed parsing feed %s, %v", feed.FeedURL, err)
 			continue

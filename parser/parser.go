@@ -22,7 +22,7 @@ type item struct {
 	} `xml:"link"`
 }
 
-func Items(url string) ([]db.Item, error) {
+func Parse(url string) ([]db.Item, error) {
 	c := &http.Client{Timeout: 10 * time.Second}
 	res, err := c.Get(url)
 	if err != nil {

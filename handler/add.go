@@ -11,7 +11,7 @@ import (
 func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	feedURL := r.FormValue("url")
 
-	items, err := parser.Items(feedURL)
+	items, err := parser.Parse(feedURL)
 	if err != nil {
 		return badRequestf("add: failed parsing feed %s, %v", feedURL, err)
 	}
