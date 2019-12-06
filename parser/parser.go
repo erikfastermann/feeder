@@ -100,10 +100,11 @@ func parse(data []byte) ([]item, error) {
 
 func parseDate(str string) (time.Time, error) {
 	for _, layout := range []string{
-		time.RFC1123,     // "Mon, 02 Jan 2006 15:04:05 MST"
-		time.RFC1123Z,    // "Mon, 02 Jan 2006 15:04:05 -0700"
-		time.RFC3339,     // "2006-01-02T15:04:05Z07:00"
-		time.RFC3339Nano, // "2006-01-02T15:04:05.999999999Z07:00"
+		time.RFC1123,     // Mon, 02 Jan 2006 15:04:05 MST
+		time.RFC1123Z,    // Mon, 02 Jan 2006 15:04:05 -0700
+		time.RFC3339,     // 2006-01-02T15:04:05Z07:00
+		time.RFC3339Nano, // 2006-01-02T15:04:05.999999999Z07:00
+		time.UnixDate,    // Mon Jan 2 15:04:05 MST 2006
 	} {
 		t, err := time.Parse(layout, str)
 		if err != nil {
