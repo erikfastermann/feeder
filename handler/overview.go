@@ -10,12 +10,13 @@ import (
 )
 
 func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	const itemsPerPage = 30
 	page := uint(0)
 	if pageStr := r.FormValue("page"); pageStr != "" {
 		page64, err := strconv.ParseUint(pageStr, 10, 0)
 		page = uint(page64)
 		const uintMax = ^uint(0)
-		if err != nil || page > uintMax/30 {
+		if err != nil || page > uintMax/itemsPerPage {
 			return badRequestf("overview: ivalid page %s", strconv.Quote(pageStr))
 		}
 	}
@@ -35,7 +36,6 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		return h.tmplts.ExecuteTemplate(w, "overview.html", data{Prev: -1, Next: -1})
 	}
 
-	const itemsPerPage = 30
 	offset := page * itemsPerPage
 	items, err := h.DB.Newest(ctx, offset, itemsPerPage)
 	if err != nil {
