@@ -57,7 +57,7 @@ func Parse(url string) ([]db.Item, error) {
 			return nil, errors.New("post without a link")
 		}
 
-		var dateStr string
+		dateStr := ""
 		switch {
 		case i.Updated != "":
 			dateStr = i.Updated
@@ -66,11 +66,13 @@ func Parse(url string) ([]db.Item, error) {
 		case i.Published != "":
 			dateStr = i.Published
 		default:
-			return nil, errors.New("post without a date")
+			final.Added = time.Now()
 		}
-		final.Added, err = parseDate(dateStr)
-		if err != nil {
-			return nil, err
+		if dateStr != "" {
+			final.Added, err = parseDate(dateStr)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		finals = append(finals, final)
