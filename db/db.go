@@ -221,8 +221,7 @@ func (db *DB) AddItems(ctx context.Context, feedID int, items []Item) error {
 			var count int
 			err := tx.QueryRowContext(ctx, `SELECT COUNT(*)
 				FROM items
-				WHERE title=? AND added=?`,
-				item.Title, item.Added).Scan(&count)
+				WHERE url=?`, item.URL).Scan(&count)
 			if err != nil {
 				return err
 			}
