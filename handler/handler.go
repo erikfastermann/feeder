@@ -43,7 +43,7 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		h.tmplts = template.Must(template.ParseGlob(h.TemplateGlob))
 		go func() {
 			h.update()
-			for range time.Tick(5 * time.Minute) {
+			for range time.Tick(time.Hour) {
 				h.update()
 			}
 		}()
