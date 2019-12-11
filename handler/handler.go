@@ -69,23 +69,29 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		route = "/" + split[1]
 	}
 
+	var rt func(context.Context, http.ResponseWriter, *http.Request) error
 	switch route {
 	case routeOverview:
-		return h.overview(ctx, w, r)
+		rt = h.overview
 	case routeFeeds:
-		return h.feeds(ctx, w, r)
+		rt = h.feeds
 	case routeAdd:
-		return h.addFeed(ctx, w, r)
+		rt = h.addFeed
 	case routeEdit:
-		return h.edit(ctx, w, r)
+		rt = h.edit
 	case routeRemove:
-		return h.remove(ctx, w, r)
+		rt = h.remove
 	default:
 		return httpwrap.Error{
 			StatusCode: http.StatusNotFound,
 			Err:        fmt.Errorf("router: invalid URL %s", r.URL.Path),
 		}
 	}
+	err := rt(ctx, w, r)
+	if httpwrap.IsErrorInternal(err) {
+		h.Logger.Print(err)
+	}
+	return err
 }
 
 func badRequestf(format string, a ...interface{}) error {
