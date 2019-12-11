@@ -42,13 +42,12 @@ func run() error {
 	}
 	defer sqlDB.Close()
 
-	l := log.New(os.Stderr, "", log.LstdFlags)
 	h := &handler.Handler{
-		Logger:       l,
+		Logger:       log.New(os.Stderr, "ERROR ", log.LstdFlags),
 		Username:     username,
 		Password:     password,
 		TemplateGlob: tmpltGlob,
 		DB:           sqlDB,
 	}
-	return http.ListenAndServeTLS(addr, certFile, keyFile, httpwrap.LogCustom(httpwrap.HandleError(h), l))
+	return http.ListenAndServeTLS(addr, certFile, keyFile, httpwrap.Log(httpwrap.HandleError(h)))
 }
