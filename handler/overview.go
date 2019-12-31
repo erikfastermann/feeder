@@ -46,7 +46,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	next := int(page) + 1
-	if offset+itemsPerPage > uint(count) {
+	if offset+itemsPerPage >= uint(count) {
 		next = -1
 	}
 
