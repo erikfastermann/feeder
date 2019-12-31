@@ -43,7 +43,6 @@ func Parse(url string) ([]db.Item, error) {
 	finals := make([]db.Item, 0)
 	for _, i := range items {
 		final := db.Item{
-			ID:     -1,
 			FeedID: -1,
 			Title:  i.Title,
 		}

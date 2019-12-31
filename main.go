@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/erikfastermann/feeder/db"
 	"github.com/erikfastermann/feeder/handler"
@@ -21,10 +19,14 @@ func main() {
 }
 
 func run() error {
-	if len(os.Args) != 6 {
-		return fmt.Errorf("USAGE: %s ADDRESS CERT_FILE KEY_FILE TEMPLATE_GLOB DB_PATH", os.Args[0])
+	if len(os.Args) != 8 {
+		return fmt.Errorf("USAGE: %s ADDRESS CERT_FILE KEY_FILE TEMPLATE_GLOB CSV_CTR CSV_FEEDS CSV_ITEMS", os.Args[0])
 	}
-	addr, certFile, keyFile, tmpltGlob, dbPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4], os.Args[5]
+	addr := os.Args[1]
+	crt, key := os.Args[2], os.Args[3]
+	tmplt := os.Args[4]
+	ctr, feeds, items := os.Args[5], os.Args[6], os.Args[7]
+
 	username := os.Getenv("FEEDER_USERNAME")
 	if username == "" {
 		return fmt.Errorf("environment variable FEEDER_USERNAME empty or unset")
@@ -34,20 +36,18 @@ func run() error {
 		return fmt.Errorf("environment variable FEEDER_PASSWORD empty or unset")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	sqlDB, err := db.Open(ctx, dbPath)
-	cancel()
+	csv, err := db.Open(ctr, feeds, items)
 	if err != nil {
 		return err
 	}
-	defer sqlDB.Close()
+	defer csv.Close()
 
 	h := &handler.Handler{
 		Logger:       log.New(os.Stderr, "ERROR ", log.LstdFlags),
 		Username:     username,
 		Password:     password,
-		TemplateGlob: tmpltGlob,
-		DB:           sqlDB,
+		TemplateGlob: tmplt,
+		DB:           csv,
 	}
-	return http.ListenAndServeTLS(addr, certFile, keyFile, httpwrap.Log(httpwrap.HandleError(h)))
+	return http.ListenAndServeTLS(addr, crt, key, httpwrap.Log(httpwrap.HandleError(h)))
 }
