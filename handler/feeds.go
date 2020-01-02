@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 )
 
-func (h *Handler) feeds(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	items, err := h.DB.AllFeeds(ctx)
+func (h *Handler) feeds(w http.ResponseWriter, r *http.Request) error {
+	items, err := h.DB.AllFeeds()
 	if err != nil {
 		return err
 	}

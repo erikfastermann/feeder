@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"database/sql"
 	"io/ioutil"
 	"os"
@@ -13,8 +12,6 @@ import (
 )
 
 func TestDB(t *testing.T) {
-	ctx := context.TODO()
-
 	dir, err := ioutil.TempDir(os.TempDir(), "feeder-db-test")
 	if err != nil {
 		t.Fatal(err)
@@ -31,10 +28,10 @@ func TestDB(t *testing.T) {
 	}
 	defer d.Close()
 
-	if _, err := d.AllFeeds(ctx); err != nil {
+	if _, err := d.AllFeeds(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.Newest(ctx, 0, 30); err != sql.ErrNoRows {
+	if _, err := d.Newest(0, 30); err != sql.ErrNoRows {
 		t.Fatal(err)
 	}
 
@@ -47,14 +44,14 @@ func TestDB(t *testing.T) {
 			FeedURL: "url" + s,
 		}
 
-		if _, err := d.AddFeed(ctx, f.Host, f.FeedURL); err != nil {
+		if _, err := d.AddFeed(f.Host, f.FeedURL); err != nil {
 			t.Fatal(err)
 		}
 
 		feeds = append(feeds, f)
 	}
 
-	feeds2, err := d.AllFeeds(ctx)
+	feeds2, err := d.AllFeeds()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,10 +61,10 @@ func TestDB(t *testing.T) {
 
 	newHost := "blubber"
 	feeds[1].Host = newHost
-	if err := d.EditFeedHost(ctx, feeds[1].ID, newHost); err != nil {
+	if err := d.EditFeedHost(feeds[1].ID, newHost); err != nil {
 		t.Fatal(err)
 	}
-	feeds2, err = d.AllFeeds(ctx)
+	feeds2, err = d.AllFeeds()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +72,7 @@ func TestDB(t *testing.T) {
 		t.Fatalf("feeds don't match after store")
 	}
 
-	if err := d.AddItems(ctx, 999, nil); err == nil {
+	if err := d.AddItems(999, nil); err == nil {
 		t.Fatal("expected an err, got nil")
 	}
 
@@ -97,10 +94,10 @@ func TestDB(t *testing.T) {
 		iwh = append(iwh, ItemWithHost{Item: item, Host: feeds[1].Host})
 	}
 
-	if err := d.AddItems(ctx, feeds[1].ID, items); err != nil {
+	if err := d.AddItems(feeds[1].ID, items); err != nil {
 		t.Fatal(err)
 	}
-	iwh1, err := d.Newest(ctx, 0, 30)
+	iwh1, err := d.Newest(0, 30)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +108,7 @@ func TestDB(t *testing.T) {
 	newItem := Item{FeedID: feeds[2].ID, Title: "some", URL: "thing", Added: timeNow()}
 	newIWH := ItemWithHost{Item: newItem, Host: feeds[2].Host}
 	iwh = append(iwh, newIWH)
-	if err := d.AddItems(ctx, feeds[2].ID, []Item{newItem}); err != nil {
+	if err := d.AddItems(feeds[2].ID, []Item{newItem}); err != nil {
 		t.Fatal(err)
 	}
 	nullNow := func() sql.NullTime {
@@ -123,7 +120,7 @@ func TestDB(t *testing.T) {
 	feeds[2].LastChecked = nullNow()
 	feeds[2].LastUpdated = nullNow()
 
-	iwh1, err = d.Newest(ctx, 0, 30)
+	iwh1, err = d.Newest(0, 30)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,11 +128,11 @@ func TestDB(t *testing.T) {
 		t.Fatal("items don't match after store")
 	}
 
-	if err := d.RemoveFeed(ctx, feeds[1].ID); err != nil {
+	if err := d.RemoveFeed(feeds[1].ID); err != nil {
 		t.Fatal(err)
 	}
 	feeds = append(make([]Feed, 0), feeds[2], feeds[0])
-	feeds2, err = d.AllFeeds(ctx)
+	feeds2, err = d.AllFeeds()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +142,7 @@ func TestDB(t *testing.T) {
 	}
 
 	iwh = []ItemWithHost{iwh[3]}
-	iwh1, err = d.Newest(ctx, 0, 30)
+	iwh1, err = d.Newest(0, 30)
 	if err != nil {
 		t.Fatal(err)
 	}

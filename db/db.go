@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"database/sql"
 	"encoding/csv"
 	"errors"
@@ -226,7 +225,7 @@ func (db *DB) Close() error {
 
 var ErrFound = errors.New("feed already exists in the database")
 
-func (db *DB) AddFeed(_ context.Context, host, feedURL string) (int, error) {
+func (db *DB) AddFeed(host, feedURL string) (int, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -255,7 +254,7 @@ func (db *DB) AddFeed(_ context.Context, host, feedURL string) (int, error) {
 
 var timeNow = time.Now
 
-func (db *DB) AddItems(_ context.Context, feedID int, items []Item) error {
+func (db *DB) AddItems(feedID int, items []Item) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -303,7 +302,7 @@ func (db *DB) AddItems(_ context.Context, feedID int, items []Item) error {
 	return rewrite(db.csvFeeds, feedsToRecs(db.feeds...))
 }
 
-func (db *DB) AllFeeds(_ context.Context) ([]Feed, error) {
+func (db *DB) AllFeeds() ([]Feed, error) {
 	less := func(i, j int) bool {
 		// TODO: check valid
 		return db.feeds[i].LastUpdated.Time.After(db.feeds[j].LastUpdated.Time)
@@ -321,7 +320,7 @@ func (db *DB) AllFeeds(_ context.Context) ([]Feed, error) {
 	return feeds, nil
 }
 
-func (db *DB) EditFeedHost(_ context.Context, id int, newHost string) error {
+func (db *DB) EditFeedHost(id int, newHost string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -334,13 +333,13 @@ func (db *DB) EditFeedHost(_ context.Context, id int, newHost string) error {
 	return sql.ErrNoRows
 }
 
-func (db *DB) ItemCount(_ context.Context) (int, error) {
+func (db *DB) ItemCount() (int, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	return len(db.items), nil
 }
 
-func (db *DB) Newest(_ context.Context, offset, limit uint) ([]ItemWithHost, error) {
+func (db *DB) Newest(offset, limit uint) ([]ItemWithHost, error) {
 	less := func(i, j int) bool {
 		return db.items[i].Added.After(db.items[j].Added)
 	}
@@ -378,7 +377,7 @@ func (db *DB) Newest(_ context.Context, offset, limit uint) ([]ItemWithHost, err
 	return iwh, nil
 }
 
-func (db *DB) RemoveFeed(_ context.Context, id int) error {
+func (db *DB) RemoveFeed(id int) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 

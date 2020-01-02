@@ -1,14 +1,13 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
 	"github.com/erikfastermann/feeder/parser"
 )
 
-func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) addFeed(w http.ResponseWriter, r *http.Request) error {
 	feedURL := r.FormValue("url")
 
 	items, err := parser.Parse(feedURL)
@@ -20,11 +19,11 @@ func (h *Handler) addFeed(ctx context.Context, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	id, err := h.DB.AddFeed(ctx, url.Scheme+"://"+url.Host, feedURL)
+	id, err := h.DB.AddFeed(url.Scheme+"://"+url.Host, feedURL)
 	if err != nil {
 		return err
 	}
-	if err := h.DB.AddItems(ctx, id, items); err != nil {
+	if err := h.DB.AddItems(id, items); err != nil {
 		return err
 	}
 

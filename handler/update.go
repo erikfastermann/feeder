@@ -1,16 +1,11 @@
 package handler
 
 import (
-	"context"
-	"time"
-
 	"github.com/erikfastermann/feeder/parser"
 )
 
 func (h *Handler) update() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	feeds, err := h.DB.AllFeeds(ctx)
-	cancel()
+	feeds, err := h.DB.AllFeeds()
 	if err != nil {
 		h.Logger.Print(err)
 	}
@@ -22,9 +17,7 @@ func (h *Handler) update() {
 			continue
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err = h.DB.AddItems(ctx, feed.ID, items)
-		cancel()
+		err = h.DB.AddItems(feed.ID, items)
 		if err != nil {
 			h.Logger.Printf("failed updating db %v", err)
 		}

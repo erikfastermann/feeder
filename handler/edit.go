@@ -1,13 +1,12 @@
 package handler
 
 import (
-	"context"
 	"database/sql"
 	"net/http"
 	"strconv"
 )
 
-func (h *Handler) edit(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) edit(w http.ResponseWriter, r *http.Request) error {
 	idStr := r.FormValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -15,7 +14,7 @@ func (h *Handler) edit(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 	host := r.FormValue("host")
 
-	if err := h.DB.EditFeedHost(ctx, id, host); err != nil {
+	if err := h.DB.EditFeedHost(id, host); err != nil {
 		if err == sql.ErrNoRows {
 			return badRequestf("id %d not found in db, %v", id, err)
 		}

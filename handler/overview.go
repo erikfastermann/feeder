@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"database/sql"
 	"net/http"
 	"strconv"
@@ -9,7 +8,7 @@ import (
 	"github.com/erikfastermann/feeder/db"
 )
 
-func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) overview(w http.ResponseWriter, r *http.Request) error {
 	const itemsPerPage = 30
 	page := uint(0)
 	if pageStr := r.FormValue("page"); pageStr != "" {
@@ -27,7 +26,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 		Items []db.ItemWithHost
 	}
 
-	count, err := h.DB.ItemCount(ctx)
+	count, err := h.DB.ItemCount()
 	if err != nil {
 		return err
 	}
@@ -37,7 +36,7 @@ func (h *Handler) overview(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	offset := page * itemsPerPage
-	items, err := h.DB.Newest(ctx, offset, itemsPerPage)
+	items, err := h.DB.Newest(offset, itemsPerPage)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return badRequestf("overview: invalid page %d", page)

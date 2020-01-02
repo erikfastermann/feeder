@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"crypto/subtle"
 	"fmt"
 	"html/template"
@@ -49,9 +48,6 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		}()
 	})
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
 	user, pass, ok := r.BasicAuth()
 	userOk := subtle.ConstantTimeCompare([]byte(user), []byte(h.Username))
 	passOk := subtle.ConstantTimeCompare([]byte(pass), []byte(h.Password))
@@ -69,7 +65,7 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 		route = "/" + split[1]
 	}
 
-	var rt func(context.Context, http.ResponseWriter, *http.Request) error
+	var rt func(http.ResponseWriter, *http.Request) error
 	switch route {
 	case routeOverview:
 		rt = h.overview
@@ -87,7 +83,7 @@ func (h *Handler) ServeHTTPWithErr(w http.ResponseWriter, r *http.Request) error
 			Err:        fmt.Errorf("router: invalid URL %s", r.URL.Path),
 		}
 	}
-	err := rt(ctx, w, r)
+	err := rt(w, r)
 	if httpwrap.IsErrorInternal(err) {
 		h.Logger.Print(err)
 	}
