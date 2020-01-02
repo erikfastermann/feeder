@@ -52,13 +52,6 @@ func feedsToRecs(feeds ...Feed) [][]string {
 	return recs
 }
 
-func sortFeeds(feeds []Feed) {
-	sort.Slice(feeds, func(i, j int) bool {
-		// TODO: check valid
-		return feeds[i].LastUpdated.Time.After(feeds[j].LastUpdated.Time)
-	})
-}
-
 type Item struct {
 	FeedID int
 	Title  string
@@ -85,12 +78,6 @@ func itemsToRecs(items ...Item) [][]string {
 		recs = append(recs, r)
 	}
 	return recs
-}
-
-func sortItems(items []Item) {
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].Added.After(items[j].Added)
-	})
 }
 
 type ItemWithHost struct {
@@ -224,8 +211,6 @@ func Open(ctrPath, feedsPath, itemsPath string) (*DB, error) {
 		return nil, err
 	}
 
-	sortFeeds(db.feeds)
-	sortItems(db.items)
 	return db, nil
 }
 
@@ -265,7 +250,6 @@ func (db *DB) AddFeed(_ context.Context, host, feedURL string) (int, error) {
 		return -1, err
 	}
 	db.feeds = append(db.feeds, feed)
-	sortFeeds(db.feeds)
 	return id, nil
 }
 
@@ -313,18 +297,25 @@ func (db *DB) AddItems(_ context.Context, feedID int, items []Item) error {
 			return err
 		}
 		db.items = append(db.items, add...)
-		sortItems(db.items)
-
 		db.feeds[idx].LastUpdated = now
-		sortFeeds(db.feeds)
 	}
 
 	return rewrite(db.csvFeeds, feedsToRecs(db.feeds...))
 }
 
 func (db *DB) AllFeeds(_ context.Context) ([]Feed, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	less := func(i, j int) bool {
+		// TODO: check valid
+		return db.feeds[i].LastUpdated.Time.After(db.feeds[j].LastUpdated.Time)
+	}
+
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if !sort.SliceIsSorted(db.feeds, less) {
+		sort.Slice(db.feeds, less)
+	}
+
 	feeds := make([]Feed, len(db.feeds))
 	copy(feeds, db.feeds)
 	return feeds, nil
@@ -350,8 +341,16 @@ func (db *DB) ItemCount(_ context.Context) (int, error) {
 }
 
 func (db *DB) Newest(_ context.Context, offset, limit uint) ([]ItemWithHost, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	less := func(i, j int) bool {
+		return db.items[i].Added.After(db.items[j].Added)
+	}
+
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if !sort.SliceIsSorted(db.items, less) {
+		sort.Slice(db.items, less)
+	}
 
 	count := uint(len(db.items))
 	if offset >= count {
@@ -389,7 +388,6 @@ func (db *DB) RemoveFeed(_ context.Context, id int) error {
 			found = true
 			db.feeds[i] = db.feeds[len(db.feeds)-1]
 			db.feeds = db.feeds[:len(db.feeds)-1]
-			sortFeeds(db.feeds)
 		}
 	}
 	if !found {
@@ -406,7 +404,6 @@ func (db *DB) RemoveFeed(_ context.Context, id int) error {
 		}
 	}
 	db.items = keep
-	sortItems(db.items)
 
 	return rewrite(db.csvItems, itemsToRecs(db.items...))
 }
