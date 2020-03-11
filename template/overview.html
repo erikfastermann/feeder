@@ -1,6 +1,13 @@
 {{ define "nav" }}
-<p>{{ if (ge .Prev 0) }}<a href="/?page={{ .Prev }}">&lt;</a>{{ end }} {{ if (gt .Next 0) }}<a href="/?page={{ .Next }}">&gt;</a>{{ end }}</p>
+<table border="0" style="table-layout: fixed; width: 100%;">
+	<tr>
+		<td>{{ if (ge .Prev 0) }}<p align="left"><a href="/?page={{ .Prev }}">&lt;</a></p>{{ end }}</td>
+		<td><p align="center"><a href="/feeds">feeds</a></p></td>
+		<td>{{ if (gt .Next 0) }}<p align="right"><a href="/?page={{ .Next }}">&gt;</a></p>{{ end }}</td>
+	</tr>
+</table>
 {{ end }}
+
 {{ template "nav" . }}
 <hr>
 {{ range .Items }}
@@ -8,4 +15,3 @@
 {{ end }}
 <hr>
 {{ template "nav" . }}
-<p><a href="/feeds">feeds</a></p>
